@@ -96,7 +96,7 @@ func Request(notification structs.MediaAutoApprovedNotification) {
                 properties := torrentio.GetPropertiesFromStream(result)
                 fmt.Println("  *", properties.Title)
 
-                err := debrid.AddMagnet(result.InfoHash)
+                err := debrid.AddMagnet(properties.Link)
                 if err != nil {
                     fmt.Println("\033[31m", err, "\033[0m")
                 }
