@@ -3,11 +3,11 @@ package movies
 import (
     "fmt"
     "os"
-    "project-pod/api/debrid"
-    "project-pod/api/plex"
-    "project-pod/api/structs"
-    "project-pod/api/torrentio"
-    torrentio_movies "project-pod/api/torrentio/movies"
+    "project-pod/modules/debrid"
+    "project-pod/modules/plex"
+    "project-pod/modules/structs"
+    "project-pod/modules/torrentio"
+    torrentio_movies "project-pod/modules/torrentio/movies"
 )
 
 func Request(notification structs.MediaAutoApprovedNotification) {

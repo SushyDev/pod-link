@@ -4,7 +4,7 @@ import (
     "encoding/json"
     "fmt"
     "net/http"
-    "project-pod/api/torrentio"
+    "project-pod/modules/torrentio"
 )
 
 func GetList(ImdbId string) []torrentio.Stream {

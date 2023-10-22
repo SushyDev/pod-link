@@ -3,11 +3,11 @@ package tv
 import (
     "fmt"
     "os"
-    "project-pod/api/debrid"
-    "project-pod/api/plex"
-    "project-pod/api/structs"
-    "project-pod/api/torrentio"
-    torrentio_tv "project-pod/api/torrentio/tv"
+    "project-pod/modules/debrid"
+    "project-pod/modules/plex"
+    "project-pod/modules/structs"
+    "project-pod/modules/torrentio"
+    torrentio_tv "project-pod/modules/torrentio/tv"
     "strconv"
     "strings"
 )

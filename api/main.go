@@ -5,9 +5,9 @@ import (
     "fmt"
     "io"
     "net/http"
-    overseerr_movies "project-pod/api/overseerr/movies"
-    overseerr_tv "project-pod/api/overseerr/tv"
-    "project-pod/api/structs"
+    overseerr_movies "project-pod/modules/overseerr/movies"
+    overseerr_tv "project-pod/modules/overseerr/tv"
+    "project-pod/modules/structs"
 )
 
 func handleMediaAutoApprovedNotification(notification structs.MediaAutoApprovedNotification) {
