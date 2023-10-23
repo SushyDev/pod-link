@@ -1,3 +1,3 @@
-module project-pod
+module link-pod
 
 go 1.20

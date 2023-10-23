@@ -40,6 +40,28 @@ func extractEmojiValues(input string) []string {
     return regex.FindStringSubmatch(input)[1:]
 }
 
+const titlePattern = `(.*).(\d+)x(\d+)\.(.*)`
+
+func formatTitle(title string) string {
+    re := regexp.MustCompile(titlePattern)
+    match := re.FindStringSubmatch(title)
+
+    // Check for a valid match and submatches
+    if len(match) < 5 {
+        return title
+    }
+
+    showName := match[1]
+    season := match[2]
+    episode := match[3]
+    rest := match[4]
+
+    seasonPart := fmt.Sprintf("S%s", season)
+    episodePart := fmt.Sprintf("E%s", episode)
+
+    return fmt.Sprintf("%s.%s%s.%s", showName, seasonPart, episodePart, rest)
+}
+
 func GetPropertiesFromStream(stream Stream) Properties {
     var properties Properties
 
@@ -54,7 +76,7 @@ func GetPropertiesFromStream(stream Stream) Properties {
     emojiValues := extractEmojiValues(emojiString)
 
     properties.Title = strings.ReplaceAll(titleSplit[0], " ", ".")
-    properties.Link = "magnet:?xt=urn:btih:" + stream.InfoHash + "&dn=&tr="
+    properties.Link = "magnet:?xt=urn:btih:" + stream.InfoHash + "&dn=" + properties.Title + "&tr="
     properties.Seeds = emojiValues[0]
     properties.Size = emojiValues[1]
     properties.Source = emojiValues[2]

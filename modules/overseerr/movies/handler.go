@@ -1,13 +1,13 @@
 package movies
 
 import (
-    "fmt"
-    "os"
-    "project-pod/modules/debrid"
-    "project-pod/modules/plex"
-    "project-pod/modules/structs"
-    "project-pod/modules/torrentio"
-    torrentio_movies "project-pod/modules/torrentio/movies"
+	"fmt"
+	"os"
+	"link-pod/modules/debrid"
+	"link-pod/modules/plex"
+	"link-pod/modules/structs"
+	"link-pod/modules/torrentio"
+	torrentio_movies "link-pod/modules/torrentio/movies"
 )
 
 func Request(notification structs.MediaAutoApprovedNotification) {

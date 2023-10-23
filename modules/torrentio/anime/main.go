@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"project-pod/modules/torrentio"
+	"link-pod/modules/torrentio"
 )
 
 func GetList(KitsuId string, Episode int) []torrentio.Stream {
