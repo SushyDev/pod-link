@@ -1,14 +1,16 @@
 package movies
 
 import (
-    "encoding/json"
-    "fmt"
-    "net/http"
-    "link-pod/modules/torrentio"
+	"encoding/json"
+	"fmt"
+	"link-pod/modules/torrentio"
+	"net/http"
+	"os"
 )
 
 func GetList(ImdbId string) []torrentio.Stream {
-    filter := "sort=qualitysize%7Cqualityfilter=other,scr,cam,unknown"
+    realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
+    filter := "qualityfilter=other,scr,cam,unknown|realdebrid=" + realdebrid
     url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/movie/%s.json", filter, ImdbId)
 
     req, err := http.NewRequest("GET", url, nil)
@@ -34,5 +36,5 @@ func GetList(ImdbId string) []torrentio.Stream {
         fmt.Println("Failed to decode response")
     }
 
-    return torrentio.FilterResults(data.Streams)
+	return torrentio.FilterResults(data.Streams)
 }

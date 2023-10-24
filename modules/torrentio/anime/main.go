@@ -3,14 +3,15 @@ package anime
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"link-pod/modules/torrentio"
+	"net/http"
+	"os"
 )
 
 func GetList(KitsuId string, Episode int) []torrentio.Stream {
-	url := fmt.Sprintf("https://torrentio.strem.fun/stream/anime/kitsu:%s:%v.json", KitsuId, Episode)
-
-	fmt.Println(url)
+	realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
+	filter := "realdebrid=" + realdebrid
+	url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/anime/kitsu:%s:%v.json", filter, KitsuId, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

@@ -15,7 +15,7 @@ type AddMagnetResponse struct {
 	Uri string `json:"uri"`
 }
 
-func AddMagnet(magnet string) error {
+func AddMagnet(magnet string, files string) error {
 	input := url.Values{}
 	input.Set("magnet", magnet)
 
@@ -26,7 +26,7 @@ func AddMagnet(magnet string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_API_KEY")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_TOKEN")))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}
@@ -48,7 +48,7 @@ func AddMagnet(magnet string) error {
 
 	switch response.StatusCode {
 	case 201:
-		return selectFiles(data.Id)
+		return selectFiles(data.Id, files)
 	case 400:
 		return errors.New("Bad Request (see error message)")
 	case 401:
@@ -69,7 +69,7 @@ func deleteFile(id string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_API_KEY")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_TOKEN")))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}
@@ -97,9 +97,9 @@ func deleteFile(id string) error {
 }
 
 
-func selectFiles(id string) error {
+func selectFiles(id string, files string) error {
 	input := url.Values{}
-	input.Set("files", "all")
+	input.Set("files", files)
 
 	requestBody := input.Encode()
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://api.real-debrid.com/rest/1.0/torrents/selectFiles/%s", id), bytes.NewBufferString(requestBody))
@@ -108,7 +108,7 @@ func selectFiles(id string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_API_KEY")))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REAL_DEBRID_TOKEN")))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}

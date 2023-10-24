@@ -9,7 +9,7 @@ import (
 type Stream struct {
     Name          string `json:"name"`
     Title         string `json:"title"`
-    InfoHash      string `json:"infoHash"`
+    Url           string `json:"url"`
     BehaviorHints struct {
         BingeGroup string `json:"bingeGroup"`
     }
@@ -26,6 +26,7 @@ type Properties struct {
     Seeds   string
     Source  string
     Release string
+    Files   string
 }
 
 func extractEmojiValues(input string) []string {
@@ -40,26 +41,13 @@ func extractEmojiValues(input string) []string {
     return regex.FindStringSubmatch(input)[1:]
 }
 
-const titlePattern = `(.*).(\d+)x(\d+)\.(.*)`
+func parseLink(input string) (string, string) {
+    split := strings.Split(input, "/")
+    hash := split[5]
+    so := split[6]
+    dn := split[8]
 
-func formatTitle(title string) string {
-    re := regexp.MustCompile(titlePattern)
-    match := re.FindStringSubmatch(title)
-
-    // Check for a valid match and submatches
-    if len(match) < 5 {
-        return title
-    }
-
-    showName := match[1]
-    season := match[2]
-    episode := match[3]
-    rest := match[4]
-
-    seasonPart := fmt.Sprintf("S%s", season)
-    episodePart := fmt.Sprintf("E%s", episode)
-
-    return fmt.Sprintf("%s.%s%s.%s", showName, seasonPart, episodePart, rest)
+    return "magnet:?xt=urn:btih:" + hash + "&dn=" + dn, so
 }
 
 func GetPropertiesFromStream(stream Stream) Properties {
@@ -74,13 +62,15 @@ func GetPropertiesFromStream(stream Stream) Properties {
     }
 
     emojiValues := extractEmojiValues(emojiString)
+    magnet, files := parseLink(stream.Url)
 
     properties.Title = strings.ReplaceAll(titleSplit[0], " ", ".")
-    properties.Link = "magnet:?xt=urn:btih:" + stream.InfoHash + "&dn=" + properties.Title + "&tr="
+    properties.Link = magnet
     properties.Seeds = emojiValues[0]
     properties.Size = emojiValues[1]
     properties.Source = emojiValues[2]
     properties.Release = "[torrentio: " + properties.Source + "]"
+    properties.Files = files
 
     return properties
 }
@@ -110,12 +100,10 @@ type Filter struct {
 
 func getByFilters(filters []Filter, streams []Stream) Stream {
     for _, stream := range streams {
-        bingeGroup := strings.ToLower(stream.BehaviorHints.BingeGroup)
-
         match := true
         for _, filter := range filters {
             if filter.include {
-                matched, err := regexp.MatchString(filter.pattern, bingeGroup)
+                matched, err := regexp.MatchString(filter.pattern, stream.Title)
                 if err != nil {
                     fmt.Printf("Error matching regular expression: %v\n", err)
                     return Stream{}
@@ -125,10 +113,10 @@ func getByFilters(filters []Filter, streams []Stream) Stream {
                     match = false
                     break
                 }
-            } 
+            }
 
             if !filter.include {
-                matched, err := regexp.MatchString(filter.pattern, bingeGroup)
+                matched, err := regexp.MatchString(filter.pattern, stream.Title)
                 if err != nil {
                     fmt.Printf("Error matching regular expression: %v\n", err)
                     return Stream{}
@@ -149,28 +137,36 @@ func getByFilters(filters []Filter, streams []Stream) Stream {
     return Stream{}
 }
 
-
 func FilterResults(streams []Stream) []Stream {
     var results []Stream
+
+    excludeBadEpisodeListing := Filter{
+        include: false,
+        pattern: `\.\d{1,2}x\d{1,2}\.`,
+    }
+
+    excludeHdr := Filter{
+        include: false,
+        pattern: `hdr`,
+    }
 
     filters := [][]Filter{
         // includes 4k and HDR
         {
             {
                 include: true,
-                pattern: `4k.*hdr|hdr.*4k`,
+                pattern: `2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k`,
             },
+            excludeBadEpisodeListing,
         },
         // includes 4k and not HDR
         {
             {
                 include: true,
-                pattern: `4k`,
+                pattern: `2160p|4k`,
             },
-            {
-                include: false,
-                pattern: `hdr`,
-            },
+            excludeHdr,
+            excludeBadEpisodeListing,
         },
         // includes 1080p and HDR
         {
@@ -178,6 +174,7 @@ func FilterResults(streams []Stream) []Stream {
                 include: true,
                 pattern: `1080p.*hdr|hdr.*1080p`,
             },
+            excludeBadEpisodeListing,
         },
         // includes 1080p and not HDR
         {
@@ -185,10 +182,8 @@ func FilterResults(streams []Stream) []Stream {
                 include: true,
                 pattern: `1080p`,
             },
-            {
-                include: false,
-                pattern: `hdr`,
-            },
+            excludeHdr,
+            excludeBadEpisodeListing,
         },
     }
 

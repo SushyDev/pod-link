@@ -3,12 +3,14 @@ package tv
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"link-pod/modules/torrentio"
+	"net/http"
+	"os"
 )
 
 func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
-	filter := "sort=qualitysize%7Cqualityfilter=other,scr,cam,unknown"
+	realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
+	filter := "qualityfilter=other,scr,cam,unknown|realdebrid=" + realdebrid
 	url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/series/%s:%v:%v.json", filter, ImdbId, Season, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
