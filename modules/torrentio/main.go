@@ -1,9 +1,10 @@
 package torrentio
 
 import (
-    "fmt"
-    "regexp"
-    "strings"
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
 )
 
 type Stream struct {
@@ -140,8 +141,11 @@ func getByFilters(filter []Filter, streams []Stream) Stream {
 func FilterOutNonEpisodes(streams []Stream) []Stream {
     var results []Stream
     for i, stream := range streams {
-        split := strings.Split(stream.Url, "/")
-        if split[5] != "1" {
+        url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
+        url = strings.ReplaceAll(url, os.Getenv("REAL_DEBRID_TOKEN"), "")
+
+        split := strings.Split(url, "/")
+        if split[2] == "1" {
             results = append(results, streams[i])
         }
     }
