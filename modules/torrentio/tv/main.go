@@ -36,5 +36,6 @@ func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
 		fmt.Println("Failed to decode response")
 	}
 
-	return torrentio.FilterResults(data.Streams)
+	filtered := torrentio.FilterOutNonEpisodes(data.Streams)
+	return torrentio.FilterResults(filtered)
 }

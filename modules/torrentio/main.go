@@ -98,10 +98,10 @@ type Filter struct {
     pattern string
 }
 
-func getByFilters(filters []Filter, streams []Stream) Stream {
+func getByFilters(filter []Filter, streams []Stream) Stream {
     for _, stream := range streams {
         match := true
-        for _, filter := range filters {
+        for _, filter := range filter {
             if filter.include {
                 matched, err := regexp.MatchString(filter.pattern, stream.Title)
                 if err != nil {
@@ -135,6 +135,18 @@ func getByFilters(filters []Filter, streams []Stream) Stream {
     }
 
     return Stream{}
+}
+
+func FilterOutNonEpisodes(streams []Stream) []Stream {
+    var results []Stream
+    for i, stream := range streams {
+        split := strings.Split(stream.Url, "/")
+        if split[5] != "1" {
+            results = append(results, streams[i])
+        }
+    }
+
+    return results
 }
 
 func FilterResults(streams []Stream) []Stream {
