@@ -7,9 +7,9 @@ import (
     "log"
     "net/http"
     "os"
-    overseerr_movies "link-pod/modules/overseerr/movies"
-    overseerr_tv "link-pod/modules/overseerr/tv"
-    "link-pod/modules/structs"
+    overseerr_movies "pod-link/modules/overseerr/movies"
+    overseerr_tv "pod-link/modules/overseerr/tv"
+    "pod-link/modules/structs"
 )
 
 func handleMediaAutoApprovedNotification(notification structs.MediaAutoApprovedNotification) {

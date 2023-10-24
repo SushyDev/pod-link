@@ -3,7 +3,7 @@ package tv
 import (
 	"encoding/json"
 	"fmt"
-	"link-pod/modules/torrentio"
+	"pod-link/modules/torrentio"
 	"net/http"
 	"os"
 )
