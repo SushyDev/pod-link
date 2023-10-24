@@ -1,5 +1,4 @@
 # pod-link
--
 ## Build
 `go build main.go`
 
@@ -15,3 +14,8 @@ PLEX_TV_ID=
 PLEX_MOVIE_ID=
 ```
 PLEX_X_ID= is for the id of the corresponding library in plex
+
+## Credits
+[Plex Debrid](https://github.com/itsToggle/plex_debrid/) A lot of the inspiration
+
+[Torrentio](https://github.com/TheBeastLT/torrentio-scraper) The source for all media
