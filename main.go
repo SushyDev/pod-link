@@ -1,15 +1,15 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	overseerr_movies "link-pod/modules/overseerr/movies"
-	overseerr_tv "link-pod/modules/overseerr/tv"
-	"link-pod/modules/structs"
+    "encoding/json"
+    "fmt"
+    "io"
+    "log"
+    "net/http"
+    "os"
+    overseerr_movies "link-pod/modules/overseerr/movies"
+    overseerr_tv "link-pod/modules/overseerr/tv"
+    "link-pod/modules/structs"
 )
 
 func handleMediaAutoApprovedNotification(notification structs.MediaAutoApprovedNotification) {
@@ -18,7 +18,7 @@ func handleMediaAutoApprovedNotification(notification structs.MediaAutoApprovedN
         overseerr_movies.Request(notification)
     case "tv":
         overseerr_tv.Request(notification)
-    }
+}
 }
 
 type RequestData struct {
@@ -63,8 +63,8 @@ func main() {
             handleMediaAutoApprovedNotification(mediaAutoApprovedNotification)
         default:
             fmt.Println("unknown")
-    
-        }
+
+    }
 
         // Marshal the modified JSON back to bytes
         responseData, err := json.Marshal(requestData)
