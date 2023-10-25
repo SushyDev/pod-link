@@ -194,7 +194,7 @@ func FilterFormats(streams []Stream) []Stream {
         }
     }
 
-    if len(results) == 0 {
+    if len(results) == 0 && len(streams) > 0 {
         results = append(results, streams[0])
     }
 
