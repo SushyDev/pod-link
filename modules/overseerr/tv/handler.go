@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 func isAnime(keywords []Keyword) bool {
@@ -165,6 +166,7 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 	seasonWg.Wait()
 
 	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_TV_ID") != "" {
+		time.Sleep(1 * time.Second)
 		err := plex.RefreshLibrary(os.Getenv("PLEX_TV_ID"))
 		if err != nil {
 			fmt.Println(err)

@@ -6,7 +6,7 @@ Narrowed down alternative to plex debrid. Specifically combining the power of Ov
 ## Run
 Run the executable and make sure all these environment variables are available:
 ```
-REAL_DEBRID_API_KEY=
+REAL_DEBRID_TOKEN=
 OVERSEERR_HOST=
 OVERSEERR_TOKEN=
 PLEX_HOST=

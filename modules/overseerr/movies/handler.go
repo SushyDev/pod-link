@@ -8,6 +8,7 @@ import (
 	"pod-link/modules/structs"
 	"pod-link/modules/torrentio"
 	torrentio_movies "pod-link/modules/torrentio/movies"
+	"time"
 )
 
 func Request(notification structs.MediaAutoApprovedNotification) {
@@ -26,6 +27,7 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 	}
 
 	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_MOVIE_ID") != "" {
+		time.Sleep(1 * time.Second)
 		err := plex.RefreshLibrary(os.Getenv("PLEX_MOVIE_ID"))
 		if err != nil {
 			fmt.Println(err)
