@@ -67,7 +67,7 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
         return
     }
 
-    for _, result := range results {
+    for _, result := range filtered {
         properties := torrentio.GetPropertiesFromStream(result)
         fmt.Println("  [Season:", season, "] [Episode:", episode, "] *", properties.Title)
 
