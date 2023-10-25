@@ -49,10 +49,10 @@ func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
 		isE := regexp.MustCompile(`(?i)[. ]e\d+[. ]`)
 		isEpisode := regexp.MustCompile(`(?i)[. ]episode \d+[. ]`)
 
-		if isE.MatchString(stream.Title) ||
-			isEpisode.MatchString(stream.Title) ||
-			!isS.MatchString(stream.Title) ||
-			!isSeason.MatchString(stream.Title) {
+		isEpisodeMatch := isE.MatchString(stream.Title) || isEpisode.MatchString(stream.Title)
+		isSeasonMatch := isS.MatchString(stream.Title) || isSeason.MatchString(stream.Title)
+
+		if isEpisodeMatch || !isSeasonMatch {
 			continue
 		}
 
