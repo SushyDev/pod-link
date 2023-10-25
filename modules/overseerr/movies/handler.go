@@ -25,9 +25,11 @@ func Request(notification structs.MediaAutoApprovedNotification) {
         }
     }
 
-    err := plex.RefreshLibrary(os.Getenv("PLEX_MOVIE_ID"))
-    if err != nil {
-        fmt.Println(err)
-        fmt.Println("Failed to refresh library")
+    if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_MOVIE_ID") != "" {
+        err := plex.RefreshLibrary(os.Getenv("PLEX_MOVIE_ID"))
+        if err != nil {
+            fmt.Println(err)
+            fmt.Println("Failed to refresh library")
+        }
     }
 }
