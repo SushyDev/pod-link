@@ -1,11 +1,11 @@
 package movies
 
 import (
-	"encoding/json"
-	"fmt"
-	"pod-link/modules/torrentio"
-	"net/http"
-	"os"
+    "encoding/json"
+    "fmt"
+    "pod-link/modules/torrentio"
+    "net/http"
+    "os"
 )
 
 func GetList(ImdbId string) []torrentio.Stream {
@@ -36,5 +36,5 @@ func GetList(ImdbId string) []torrentio.Stream {
         fmt.Println("Failed to decode response")
     }
 
-	return torrentio.FilterResults(data.Streams)
+    return torrentio.FilterFormats(data.Streams)
 }

@@ -18,7 +18,6 @@ func Request(notification structs.MediaAutoApprovedNotification) {
         properties := torrentio.GetPropertiesFromStream(result)
 
         fmt.Println("Adding:", properties.Title)
-        fmt.Println("    -", properties.Link)
 
         err := debrid.AddMagnet(properties.Link, properties.Files)
         if err != nil {

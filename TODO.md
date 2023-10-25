@@ -1,4 +1,4 @@
 - concurrent fetching
 - migrate to jackett
 - if found entire season then skip the rest of the episodes (check based on files compared to episode count)
-- check if env is properly filled
+- check if env is properly filled (perhaps list library keys when plex token is filled but plex id's are not)
