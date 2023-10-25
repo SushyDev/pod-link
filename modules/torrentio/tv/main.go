@@ -12,7 +12,7 @@ import (
 
 func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
 	realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
-	filter := "qualityfilter=other,scr,cam,unknown|realdebrid=" + realdebrid
+	filter := "sort=qualitysize|qualityfilter=other,scr,cam,unknown|realdebrid=" + realdebrid
 	url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/series/%s:%v:%v.json", filter, ImdbId, Season, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
