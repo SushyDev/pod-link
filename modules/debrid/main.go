@@ -96,7 +96,6 @@ func deleteFile(id string) error {
 	}
 }
 
-
 func selectFiles(id string, files string) error {
 	input := url.Values{}
 	input.Set("files", files)

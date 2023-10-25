@@ -14,162 +14,161 @@ import (
 )
 
 func isAnime(keywords []Keyword) bool {
-    for _, keyword := range keywords {
-        if strings.ToLower(keyword.Name) == "anime" {
-            return true
-        }
-    }
+	for _, keyword := range keywords {
+		if strings.ToLower(keyword.Name) == "anime" {
+			return true
+		}
+	}
 
-    return false
+	return false
 }
 
 func getEpisodeCountBySeason(number int, seasons []Season) int {
-    for _, season := range seasons {
-        if season.SeasonNumber == number {
-            return season.EpisodeCount
-        }
-    }
+	for _, season := range seasons {
+		if season.SeasonNumber == number {
+			return season.EpisodeCount
+		}
+	}
 
-    return 0
+	return 0
 }
 
 func getRequestedSeasons(extra []structs.Extra) []int {
-    var seasonNumbers = []int{}
+	var seasonNumbers = []int{}
 
-    for _, extra := range extra {
-        if extra.Name != "Requested Seasons" {
-            continue
-        }
+	for _, extra := range extra {
+		if extra.Name != "Requested Seasons" {
+			continue
+		}
 
-        list := strings.Split(extra.Value, ", ")
-        for _, season := range list {
-            seasonNumber, err := strconv.Atoi(season)
-            if err != nil {
-                fmt.Println(err)
-                fmt.Println("Failed to convert season to int")
-            }
+		list := strings.Split(extra.Value, ", ")
+		for _, season := range list {
+			seasonNumber, err := strconv.Atoi(season)
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("Failed to convert season to int")
+			}
 
-            seasonNumbers = append(seasonNumbers, seasonNumber)
-        }
-    }
+			seasonNumbers = append(seasonNumbers, seasonNumber)
+		}
+	}
 
-    return seasonNumbers
+	return seasonNumbers
 }
 
 func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
-    results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
-    episodes := torrentio_tv.FilterEpisodes(results)
-    filtered := torrentio.FilterFormats(episodes)
+	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
+	episodes := torrentio_tv.FilterEpisodes(results)
+	filtered := torrentio.FilterFormats(episodes)
 
-    if len(filtered) == 0 {
-        fmt.Println("  [Season:", season, "] [Episode:", episode, "] No complete episodes found")
-        wg.Done()
-        return
-    }
+	if len(filtered) == 0 {
+		fmt.Println(fmt.Sprintf("  [S%vE%v] No episodes found", season, episode))
+		wg.Done()
+		return
+	}
 
-    for _, result := range filtered {
-        properties := torrentio.GetPropertiesFromStream(result)
-        fmt.Println("  [Season:", season, "] [Episode:", episode, "] *", properties.Title)
+	for _, result := range filtered {
+		properties := torrentio.GetPropertiesFromStream(result)
+		fmt.Println(fmt.Sprintf("  [S%vE%v] + %v", season, episode, properties.Title))
 
-        err := debrid.AddMagnet(properties.Link, properties.Files)
-        if err != nil {
-            fmt.Println("\033[31m", err, "\033[0m")
-        }
-    }
+		err := debrid.AddMagnet(properties.Link, properties.Files)
+		if err != nil {
+			fmt.Println("\033[31m", err, "\033[0m")
+		}
+	}
 
-    wg.Done()
+	wg.Done()
 }
 
-
 func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
-    results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
-    seasons := torrentio_tv.FilterSeasons(results)
-    filtered := torrentio.FilterFormats(seasons)
+	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
+	seasons := torrentio_tv.FilterSeasons(results)
+	filtered := torrentio.FilterFormats(seasons)
 
-    if len(filtered) == 0 {
-        fmt.Println("  [Season:", season, "] No complete seasons found, searching for episodes")
-        episodes := getEpisodeCountBySeason(season, details.Seasons)
+	if len(filtered) == 0 {
+		fmt.Println(fmt.Sprintf("  [S%v] No complete seasons found, searching for episodes", season))
+		episodes := getEpisodeCountBySeason(season, details.Seasons)
 
-        if episodes == 0 {
-            fmt.Println("  [Season:", season, "] No episodes found")
-            seasonWg.Done()
-            return
-        }
+		if episodes == 0 {
+			fmt.Println("  [Season:", season, "] No episodes found")
+			seasonWg.Done()
+			return
+		}
 
-        var episodesWg sync.WaitGroup
-        for episode := 1; episode <= episodes; episode++ {
-            episodesWg.Add(1)
-            go FindByEpisode(season, episode, details, &episodesWg)
-        }
+		var episodesWg sync.WaitGroup
+		for episode := 1; episode <= episodes; episode++ {
+			episodesWg.Add(1)
+			go FindByEpisode(season, episode, details, &episodesWg)
+		}
 
-        episodesWg.Done()
-        seasonWg.Done()
-        return
-    }
+		episodesWg.Wait()
+		seasonWg.Done()
+		return
+	}
 
-    fmt.Println("  [Season:", season, "] Found complete season")
-    for _, result := range filtered {
-        properties := torrentio.GetPropertiesFromStream(result)
-        fmt.Println("  [Season:", season, "] *", properties.Title)
+	fmt.Println(fmt.Sprintf("  [S%v] Found complete season", season))
+	for _, result := range filtered {
+		properties := torrentio.GetPropertiesFromStream(result)
+		fmt.Println(fmt.Sprintf("  [S%v] + %v", season, properties.Title))
 
-        err := debrid.AddMagnet(properties.Link, properties.Files)
-        if err != nil {
-            fmt.Println("\033[31m", err, "\033[0m")
-        }
-    }
+		err := debrid.AddMagnet(properties.Link, properties.Files)
+		if err != nil {
+			fmt.Println("\033[31m", err, "\033[0m")
+		}
+	}
 
-    seasonWg.Done()
+	seasonWg.Done()
 }
 
 func Request(notification structs.MediaAutoApprovedNotification) {
-    details := GetDetails(notification.Media.TmdbId)
-    fmt.Println("Got request for", details.Name)
+	details := GetDetails(notification.Media.TmdbId)
+	fmt.Println("Got request for", details.Name)
 
-    // TODO: Check kitsu if format is (name-season, episode) or (name, (all episodes before + episode))
-    // if isAnime(details.Keywords) {
-    //     for _, season := range requestedSeasons {
-    //         if season == 0 {
-    //             continue
-    //         }
-    //
-    //         kitsuName := strings.ReplaceAll(details.Name, " ", "-")
-    //         kitsuName = strings.ToLower(kitsuName)
-    //
-    //         if season > 1 {
-    //             kitsuName = fmt.Sprintf("%s-%v", kitsuName, season)
-    //         }
-    //
-    //         kitsuDetails := kitsu.GetDetails(kitsuName)
-    //
-    //         for episode := 1; episode <= kitsuDetails.Attributes.EpisodeCount; episode++ {
-    //             results := torrentio_anime.GetList(kitsuDetails.ID, episode)
-    //
-    //
-    //         }
-    //     }
-    // }
+	// TODO: Check kitsu if format is (name-season, episode) or (name, (all episodes before + episode))
+	// if isAnime(details.Keywords) {
+	//     for _, season := range requestedSeasons {
+	//         if season == 0 {
+	//             continue
+	//         }
+	//
+	//         kitsuName := strings.ReplaceAll(details.Name, " ", "-")
+	//         kitsuName = strings.ToLower(kitsuName)
+	//
+	//         if season > 1 {
+	//             kitsuName = fmt.Sprintf("%s-%v", kitsuName, season)
+	//         }
+	//
+	//         kitsuDetails := kitsu.GetDetails(kitsuName)
+	//
+	//         for episode := 1; episode <= kitsuDetails.Attributes.EpisodeCount; episode++ {
+	//             results := torrentio_anime.GetList(kitsuDetails.ID, episode)
+	//
+	//
+	//         }
+	//     }
+	// }
 
-    seasons := getRequestedSeasons(notification.Extra)
-    fmt.Println("Requested seasons:", seasons)
+	seasons := getRequestedSeasons(notification.Extra)
+	fmt.Println("Requested seasons:", seasons)
 
-    if len(seasons) == 0 {
-        fmt.Println("No seasons found, endning")
-        return
-    }
+	if len(seasons) == 0 {
+		fmt.Println("No seasons found, ending")
+		return
+	}
 
 	var seasonWg sync.WaitGroup
-    for _, season := range seasons {
-        seasonWg.Add(1)
-        go FindBySeason(season, details, &seasonWg)
-    }
+	for _, season := range seasons {
+		seasonWg.Add(1)
+		go FindBySeason(season, details, &seasonWg)
+	}
 
-    seasonWg.Wait()
+	seasonWg.Wait()
 
-    if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_TV_ID") != "" {
-        err := plex.RefreshLibrary(os.Getenv("PLEX_TV_ID"))
-        if err != nil {
-            fmt.Println(err)
-            fmt.Println("Failed to refresh library")
-        }
-    }
+	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_TV_ID") != "" {
+		err := plex.RefreshLibrary(os.Getenv("PLEX_TV_ID"))
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Failed to refresh library")
+		}
+	}
 }

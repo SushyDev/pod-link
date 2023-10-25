@@ -42,38 +42,37 @@ func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
 }
 
 func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
-    var results []torrentio.Stream
-    for i, stream := range streams {
-        isS := regexp.MustCompile(`(?i)[. ]s\d+[. ]`)
-        isSeason := regexp.MustCompile(`(?i)[. ]season \d+[. ]`)
-        isE := regexp.MustCompile(`(?i)[. ]e\d+[. ]`)
-        isEpisode := regexp.MustCompile(`(?i)[. ]episode \d+[. ]`)
+	var results []torrentio.Stream
+	for i, stream := range streams {
+		isS := regexp.MustCompile(`(?i)[. ]s\d+[. ]`)
+		isSeason := regexp.MustCompile(`(?i)[. ]season \d+[. ]`)
+		isE := regexp.MustCompile(`(?i)[. ]e\d+[. ]`)
+		isEpisode := regexp.MustCompile(`(?i)[. ]episode \d+[. ]`)
 
-        if isE.MatchString(stream.Title) ||
-        isEpisode.MatchString(stream.Title) ||
-        !isS.MatchString(stream.Title) ||
-        !isSeason.MatchString(stream.Title) {
-            continue
-        }
+		if isE.MatchString(stream.Title) ||
+			isEpisode.MatchString(stream.Title) ||
+			!isS.MatchString(stream.Title) ||
+			!isSeason.MatchString(stream.Title) {
+			continue
+		}
 
-        results = append(results, streams[i])
-    }
+		results = append(results, streams[i])
+	}
 
-    return results
+	return results
 }
 
 func FilterEpisodes(streams []torrentio.Stream) []torrentio.Stream {
-    var results []torrentio.Stream
-    for i, stream := range streams {
-        url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
-        url = strings.ReplaceAll(url, os.Getenv("REAL_DEBRID_TOKEN"), "")
+	var results []torrentio.Stream
+	for i, stream := range streams {
+		url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
+		url = strings.ReplaceAll(url, os.Getenv("REAL_DEBRID_TOKEN"), "")
 
-        split := strings.Split(url, "/")
-        if split[2] == "1" {
-            results = append(results, streams[i])
-        }
-    }
+		split := strings.Split(url, "/")
+		if split[2] == "1" {
+			results = append(results, streams[i])
+		}
+	}
 
-    return results
+	return results
 }
-

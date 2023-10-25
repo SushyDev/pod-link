@@ -3,9 +3,9 @@ package anime
 import (
 	"encoding/json"
 	"fmt"
-	"pod-link/modules/torrentio"
 	"net/http"
 	"os"
+	"pod-link/modules/torrentio"
 )
 
 func GetList(KitsuId string, Episode int) []torrentio.Stream {
