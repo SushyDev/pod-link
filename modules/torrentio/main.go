@@ -2,6 +2,7 @@ package torrentio
 
 import (
 	"fmt"
+	"pod-link/modules/config"
 	"regexp"
 	"strings"
 )
@@ -10,6 +11,7 @@ type Stream struct {
 	Name          string `json:"name"`
 	Title         string `json:"title"`
 	Url           string `json:"url"`
+	Version       string
 	BehaviorHints struct {
 		BingeGroup string `json:"bingeGroup"`
 	}
@@ -29,23 +31,36 @@ type Properties struct {
 	Files   string
 }
 
-func extractEmojiValues(input string) []string {
+func GetBaseURL() string {
+	settings := config.GetSettings()
+	filter := settings.Torrentio.FilterURI
+	token := settings.RealDebrid.Token
+	url := fmt.Sprintf("https://torrentio.strem.fun/%s|realdebrid=%s", filter, token)
+
+	return url
+}
+
+func getEmojiValues(input string) ([]string, error) {
 	pattern := `👤\s(.*?)\s💾\s(.*?)\s⚙️\s(.*$)`
 
 	regex, err := regexp.Compile(pattern)
 	if err != nil {
 		fmt.Printf("Error compiling regular expression: %v\n", err)
-		return nil
+		return nil, err
 	}
 
-	return regex.FindStringSubmatch(input)[1:]
+	return regex.FindStringSubmatch(input)[1:], nil
 }
 
-func parseLink(input string) (string, string) {
+func getMagnet(input string) (string, string) {
 	split := strings.Split(input, "/")
 	hash := split[5]
 	so := split[6]
 	dn := split[8]
+
+	if so == "null" {
+		so = "all"
+	}
 
 	return "magnet:?xt=urn:btih:" + hash + "&dn=" + dn, so
 }
@@ -53,16 +68,22 @@ func parseLink(input string) (string, string) {
 func GetPropertiesFromStream(stream Stream) Properties {
 	var properties Properties
 
-	titleSplit := strings.Split(stream.Title, "\n")
 	emojiString := ""
+
+	titleSplit := strings.Split(stream.Title, "\n")
 	for _, title := range titleSplit {
 		if strings.Contains(title, "👤") && strings.Contains(title, "💾") && strings.Contains(title, "⚙️") {
 			emojiString = title
 		}
 	}
 
-	emojiValues := extractEmojiValues(emojiString)
-	magnet, files := parseLink(stream.Url)
+	emojiValues, err := getEmojiValues(emojiString)
+	if err != nil {
+		fmt.Printf("Error getting emoji values: %v\n", err)
+		return properties
+	}
+
+	magnet, files := getMagnet(stream.Url)
 
 	properties.Title = strings.ReplaceAll(titleSplit[0], " ", ".")
 	properties.Link = magnet
@@ -75,57 +96,33 @@ func GetPropertiesFromStream(stream Stream) Properties {
 	return properties
 }
 
-func getByRegex(pattern string, streams []Stream) Stream {
-	for _, stream := range streams {
-		bingeGroup := strings.ToLower(stream.BehaviorHints.BingeGroup)
-
-		matched, err := regexp.MatchString(pattern, bingeGroup)
-		if err != nil {
-			fmt.Printf("Error matching regular expression: %v\n", err)
-			return Stream{}
-		}
-
-		if matched {
-			return stream
-		}
-	}
-
-	return Stream{}
-}
-
-type Filter struct {
-	include bool
-	pattern string
-}
-
-func getByFilters(filter []Filter, streams []Stream) Stream {
+func getByVersion(version config.Version, streams []Stream) Stream {
 	for _, stream := range streams {
 		match := true
-		for _, filter := range filter {
-			if filter.include {
-				matched, err := regexp.MatchString(filter.pattern, stream.Title)
-				if err != nil {
-					fmt.Printf("Error matching regular expression: %v\n", err)
-					return Stream{}
-				}
 
-				if !matched {
-					match = false
-					break
-				}
+		for _, include := range version.Include {
+			matched, err := regexp.MatchString(include, stream.Title)
+			if err != nil {
+				fmt.Printf("Error matching regular expression: %v\n", err)
+				return Stream{}
 			}
 
-			if !filter.include {
-				matched, err := regexp.MatchString(filter.pattern, stream.Title)
-				if err != nil {
-					fmt.Printf("Error matching regular expression: %v\n", err)
-					return Stream{}
-				}
+			if !matched {
+				match = false
+				break
+			}
+		}
 
-				if matched {
-					match = false
-					break
-				}
+		for _, exclude := range version.Exclude {
+			matched, err := regexp.MatchString(exclude, stream.Title)
+			if err != nil {
+				fmt.Printf("Error matching regular expression: %v\n", err)
+				return Stream{}
+			}
+
+			if matched {
+				match = false
+				break
 			}
 		}
 
@@ -137,64 +134,21 @@ func getByFilters(filter []Filter, streams []Stream) Stream {
 	return Stream{}
 }
 
-func FilterFormats(streams []Stream) []Stream {
+func FilterFormats(streams []Stream, mediaType string) []Stream {
 	var results []Stream
 
-	excludeBadEpisodeListing := Filter{
-		include: false,
-		pattern: `\.\d{1,2}x\d{1,2}\.`,
-	}
+	versions := config.GetVersions(mediaType)
 
-	excludeHdr := Filter{
-		include: false,
-		pattern: `hdr`,
-	}
-
-	filters := [][]Filter{
-		// includes 4k and HDR
-		{
-			{
-				include: true,
-				pattern: `2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k`,
-			},
-			excludeBadEpisodeListing,
-		},
-		// includes 4k and not HDR
-		{
-			{
-				include: true,
-				pattern: `2160p|4k`,
-			},
-			excludeHdr,
-			excludeBadEpisodeListing,
-		},
-		// includes 1080p and HDR
-		{
-			{
-				include: true,
-				pattern: `1080p.*hdr|hdr.*1080p`,
-			},
-			excludeBadEpisodeListing,
-		},
-		// includes 1080p and not HDR
-		{
-			{
-				include: true,
-				pattern: `1080p`,
-			},
-			excludeHdr,
-			excludeBadEpisodeListing,
-		},
-	}
-
-	for _, filter := range filters {
-		result := getByFilters(filter, streams)
+	for _, version := range versions {
+		result := getByVersion(version, streams)
 		if result != (Stream{}) {
+			result.Version = version.Name
 			results = append(results, result)
 		}
 	}
 
 	if len(results) == 0 && len(streams) > 0 {
+		streams[0].Version = "Fallback"
 		results = append(results, streams[0])
 	}
 

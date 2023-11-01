@@ -1,0 +1,45 @@
+version: 1
+
+settings: 
+  real_debrid:
+    token:
+
+  overseerr:
+    host:
+    token:
+
+  plex:
+    host:
+    token:
+    tv_id:
+    movie_id:
+
+  torrentio:
+    filter_uri: "sort=qualitysize|qualityfilter=other,scr,cam,unknown"
+
+shows:
+  seasons:
+    - "(?i)[. ]s\\d+[. ]"
+    - "(?i)[. ]season \\d+[. ]"
+  episodes:
+    - "(?i)[. ]e\\d+[. ]"
+    - "(?i)[. ]episode \\d+[. ]"
+
+versions:
+  all:
+    - name: "4K and HDR"
+      include:
+        - "2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k"
+    - name: "1080P and HDR"
+      include:
+        - "1080p.*hdr|hdr.*1080p"
+    - name: "4K and not HDR"
+      include:
+        - "2160p|4k"
+      exlude:
+        - "hdr"
+    - name: "1080P and not HDR"
+      include:
+        - "1080p"
+      exlude:
+        - "hdr"

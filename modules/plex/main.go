@@ -3,12 +3,14 @@ package plex
 import (
 	"fmt"
 	"net/http"
-	"os"
+	"pod-link/modules/config"
 )
 
 func RefreshLibrary(id string) error {
-	host := os.Getenv("PLEX_HOST")
-	token := os.Getenv("PLEX_TOKEN")
+	settings := config.GetSettings()
+	host := settings.Plex.Host
+	token := settings.Plex.Token
+
 	url := fmt.Sprintf("%s/library/sections/%s/refresh?X-Plex-Token=%s", host, id, token)
 
 	req, err := http.NewRequest("GET", url, nil)

@@ -2,75 +2,30 @@ package tv
 
 import (
 	"fmt"
-	"os"
+	"pod-link/modules/config"
 	"pod-link/modules/debrid"
 	"pod-link/modules/plex"
 	"pod-link/modules/structs"
 	"pod-link/modules/torrentio"
 	torrentio_tv "pod-link/modules/torrentio/tv"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
-func isAnime(keywords []Keyword) bool {
-	for _, keyword := range keywords {
-		if strings.ToLower(keyword.Name) == "anime" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getEpisodeCountBySeason(number int, seasons []Season) int {
-	for _, season := range seasons {
-		if season.SeasonNumber == number {
-			return season.EpisodeCount
-		}
-	}
-
-	return 0
-}
-
-func getRequestedSeasons(extra []structs.Extra) []int {
-	var seasonNumbers = []int{}
-
-	for _, extra := range extra {
-		if extra.Name != "Requested Seasons" {
-			continue
-		}
-
-		list := strings.Split(extra.Value, ", ")
-		for _, season := range list {
-			seasonNumber, err := strconv.Atoi(season)
-			if err != nil {
-				fmt.Println(err)
-				fmt.Println("Failed to convert season to int")
-			}
-
-			seasonNumbers = append(seasonNumbers, seasonNumber)
-		}
-	}
-
-	return seasonNumbers
-}
-
 func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
 	episodes := torrentio_tv.FilterEpisodes(results)
-	filtered := torrentio.FilterFormats(episodes)
+	filtered := torrentio.FilterFormats(episodes, "show")
 
 	if len(filtered) == 0 {
-		fmt.Println(fmt.Sprintf("  [S%vE%v] No episodes found", season, episode))
+		fmt.Println(fmt.Sprintf("[S%vE%v] Not found", season, episode))
 		wg.Done()
 		return
 	}
 
 	for _, result := range filtered {
 		properties := torrentio.GetPropertiesFromStream(result)
-		fmt.Println(fmt.Sprintf("  [S%vE%v] + %v", season, episode, properties.Title))
+		fmt.Println(fmt.Sprintf("[%s - S%vE%v] + %v", result.Version, season, episode, properties.Title))
 
 		err := debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
@@ -84,14 +39,14 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
 	seasons := torrentio_tv.FilterSeasons(results)
-	filtered := torrentio.FilterFormats(seasons)
+	filtered := torrentio.FilterFormats(seasons, "show")
 
 	if len(filtered) == 0 {
-		fmt.Println(fmt.Sprintf("  [S%v] No complete seasons found, searching for episodes", season))
+		fmt.Println(fmt.Sprintf("[S%v] No complete seasons found, searching for episodes", season))
 		episodes := getEpisodeCountBySeason(season, details.Seasons)
 
 		if episodes == 0 {
-			fmt.Println("  [Season:", season, "] No episodes found")
+			fmt.Println("[Season:", season, "] No episodes found")
 			seasonWg.Done()
 			return
 		}
@@ -107,10 +62,9 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf("  [S%v] Found complete season", season))
 	for _, result := range filtered {
 		properties := torrentio.GetPropertiesFromStream(result)
-		fmt.Println(fmt.Sprintf("  [S%v] + %v", season, properties.Title))
+		fmt.Println(fmt.Sprintf("[%s - S%v] + %v", result.Version, season, properties.Title))
 
 		err := debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
@@ -124,30 +78,6 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 func Request(notification structs.MediaAutoApprovedNotification) {
 	details := GetDetails(notification.Media.TmdbId)
 	fmt.Println("Got request for", details.Name)
-
-	// TODO: Check kitsu if format is (name-season, episode) or (name, (all episodes before + episode))
-	// if isAnime(details.Keywords) {
-	//     for _, season := range requestedSeasons {
-	//         if season == 0 {
-	//             continue
-	//         }
-	//
-	//         kitsuName := strings.ReplaceAll(details.Name, " ", "-")
-	//         kitsuName = strings.ToLower(kitsuName)
-	//
-	//         if season > 1 {
-	//             kitsuName = fmt.Sprintf("%s-%v", kitsuName, season)
-	//         }
-	//
-	//         kitsuDetails := kitsu.GetDetails(kitsuName)
-	//
-	//         for episode := 1; episode <= kitsuDetails.Attributes.EpisodeCount; episode++ {
-	//             results := torrentio_anime.GetList(kitsuDetails.ID, episode)
-	//
-	//
-	//         }
-	//     }
-	// }
 
 	seasons := getRequestedSeasons(notification.Extra)
 	fmt.Println("Requested seasons:", seasons)
@@ -165,9 +95,14 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 
 	seasonWg.Wait()
 
-	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_TV_ID") != "" {
-		time.Sleep(1 * time.Second)
-		err := plex.RefreshLibrary(os.Getenv("PLEX_TV_ID"))
+	settings := config.GetSettings()
+	host := settings.Plex.Host
+	token := settings.Plex.Token
+	tvId := settings.Plex.TvId
+
+	if host != "" && token != "" && tvId != "" {
+		time.Sleep(20 * time.Second)
+		err := plex.RefreshLibrary(tvId)
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("Failed to refresh library")

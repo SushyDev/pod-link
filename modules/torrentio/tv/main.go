@@ -4,16 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	"pod-link/modules/config"
 	"pod-link/modules/torrentio"
 	"regexp"
 	"strings"
 )
 
 func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
-	realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
-	filter := "sort=qualitysize|qualityfilter=other,scr,cam,unknown|realdebrid=" + realdebrid
-	url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/series/%s:%v:%v.json", filter, ImdbId, Season, Episode)
+	baseURL := torrentio.GetBaseURL()
+	url := fmt.Sprintf("%s/stream/series/%s:%v:%v.json", baseURL, ImdbId, Season, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -43,20 +42,32 @@ func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
 
 func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
 	var results []torrentio.Stream
+
+	config := config.GetConfig()
+
 	for i, stream := range streams {
-		isS := regexp.MustCompile(`(?i)[. ]s\d+[. ]`)
-		isSeason := regexp.MustCompile(`(?i)[. ]season \d+[. ]`)
-		isE := regexp.MustCompile(`(?i)[. ]e\d+[. ]`)
-		isEpisode := regexp.MustCompile(`(?i)[. ]episode \d+[. ]`)
+		var isSeasonMatch bool
+		var isEpisodeMatch bool
 
-		isEpisodeMatch := isE.MatchString(stream.Title) || isEpisode.MatchString(stream.Title)
-		isSeasonMatch := isS.MatchString(stream.Title) || isSeason.MatchString(stream.Title)
+		for _, season := range config.Shows.Seasons {
+			isSeasonMatch = regexp.MustCompile(season).MatchString(stream.Title)
 
-		if isEpisodeMatch || !isSeasonMatch {
-			continue
+			if isSeasonMatch {
+				break
+			}
 		}
 
-		results = append(results, streams[i])
+		for _, episode := range config.Shows.Episodes {
+			isEpisodeMatch = regexp.MustCompile(episode).MatchString(stream.Title)
+
+			if isEpisodeMatch {
+				break
+			}
+		}
+
+		if isSeasonMatch && !isEpisodeMatch {
+			results = append(results, streams[i])
+		}
 	}
 
 	return results
@@ -66,7 +77,10 @@ func FilterEpisodes(streams []torrentio.Stream) []torrentio.Stream {
 	var results []torrentio.Stream
 	for i, stream := range streams {
 		url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
-		url = strings.ReplaceAll(url, os.Getenv("REAL_DEBRID_TOKEN"), "")
+		settings := config.GetSettings()
+		token := settings.RealDebrid.Token
+
+		url = strings.ReplaceAll(url, token, "")
 
 		split := strings.Split(url, "/")
 		if split[2] == "1" {

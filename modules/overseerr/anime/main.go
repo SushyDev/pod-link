@@ -1,4 +1,4 @@
-package kitsu
+package anime
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 
 type KitsuData struct {
 	ID         string `json:"id"`
+	Name       string `json:"name"` // Placeholder
 	Attributes struct {
 		EpisodeCount int `json:"episodeCount"`
 	} `json:"attributes"`

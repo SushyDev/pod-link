@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
+	"pod-link/modules/config"
 	overseerr_movies "pod-link/modules/overseerr/movies"
 	overseerr_tv "pod-link/modules/overseerr/tv"
 	"pod-link/modules/structs"
@@ -25,50 +25,29 @@ type RequestData struct {
 	NotificationType string `json:"notification_type"`
 }
 
-func validateEnv() {
-	if os.Getenv("REAL_DEBRID_TOKEN") == "" {
-		panic("REAL_DEBRID_TOKEN is not set")
-	}
-
-	if os.Getenv("OVERSEERR_HOST") == "" {
-		panic("OVERSEERR_HOST is not set")
-	}
-
-	if os.Getenv("OVERSEERR_TOKEN") == "" {
-		panic("OVERSEERR_TOKEN is not set")
-	}
-
-	if (os.Getenv("PLEX_HOST") == "" || os.Getenv("PLEX_TOKEN") == "") && (os.Getenv("PLEX_HOST") != "" || os.Getenv("PLEX_TOKEN") != "") {
-		panic("PLEX_HOST and PLEX_TOKEN must both be set or both be empty")
-	}
-
-	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" {
-		if os.Getenv("PLEX_TV_ID") == "" {
-			panic("PLEX_TV_ID is not set")
-		}
-
-		if os.Getenv("PLEX_MOVIE_ID") == "" {
-			panic("PLEX_MOVIE_ID is not set")
-		}
-	}
-}
-
 func main() {
-	validateEnv()
-
-	port := os.Getenv("PORT")
+	settings := config.GetSettings()
+	port := settings.Pod.Port
 	if port == "" {
 		port = "8080"
 	}
 
 	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
+			fmt.Println("Only POST requests are allowed")
 			http.Error(w, "Only POST requests are allowed", http.StatusMethodNotAllowed)
+			return
+		}
+	
+		if r.Header.Get("Authorization") != settings.Pod.Authorization {
+			fmt.Println("Unauthorized")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, "Failed to read request body", http.StatusBadRequest)
 			return
 		}
@@ -76,6 +55,7 @@ func main() {
 		var requestData RequestData
 		err = json.Unmarshal(body, &requestData)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
 			return
 		}

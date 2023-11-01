@@ -2,7 +2,7 @@ package movies
 
 import (
 	"fmt"
-	"os"
+	"pod-link/modules/config"
 	"pod-link/modules/debrid"
 	"pod-link/modules/plex"
 	"pod-link/modules/structs"
@@ -26,9 +26,14 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 		}
 	}
 
-	if os.Getenv("PLEX_HOST") != "" && os.Getenv("PLEX_TOKEN") != "" && os.Getenv("PLEX_MOVIE_ID") != "" {
-		time.Sleep(1 * time.Second)
-		err := plex.RefreshLibrary(os.Getenv("PLEX_MOVIE_ID"))
+	settings := config.GetSettings()
+	host := settings.Plex.Host
+	token := settings.Plex.Token
+	movieId := settings.Plex.MovieId
+
+	if host != "" && token != "" && movieId != "" {
+		time.Sleep(20 * time.Second)
+		err := plex.RefreshLibrary(movieId)
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("Failed to refresh library")

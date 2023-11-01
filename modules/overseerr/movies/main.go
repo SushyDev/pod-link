@@ -4,18 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	"pod-link/modules/config"
 )
 
-type OverseerrResponse struct {
-	ExternalIds struct {
-		ImdbId string `json:"imdbId"`
-	} `json:"externalIds"`
-}
-
 func GetDetails(id string) Movie {
-	host := os.Getenv("OVERSEERR_HOST")
-	token := os.Getenv("OVERSEERR_TOKEN")
+	settings := config.GetSettings()
+	host := settings.Overseerr.Host
+	token := settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/movie/%s", host, id)
 

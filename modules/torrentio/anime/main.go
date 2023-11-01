@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	"pod-link/modules/config"
 	"pod-link/modules/torrentio"
 )
 
 func GetList(KitsuId string, Episode int) []torrentio.Stream {
-	realdebrid := os.Getenv("REAL_DEBRID_TOKEN")
-	filter := "realdebrid=" + realdebrid
+	settings := config.GetSettings()
+	filter := settings.Torrentio.FilterURI
 	url := fmt.Sprintf("https://torrentio.strem.fun/%s/stream/anime/kitsu:%s:%v.json", filter, KitsuId, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -36,5 +36,5 @@ func GetList(KitsuId string, Episode int) []torrentio.Stream {
 		fmt.Println("Failed to decode response")
 	}
 
-	return torrentio.FilterFormats(data.Streams)
+	return torrentio.FilterFormats(data.Streams, "anime")
 }
