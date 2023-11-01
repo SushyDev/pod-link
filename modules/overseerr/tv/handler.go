@@ -18,14 +18,14 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 	filtered := torrentio.FilterFormats(episodes, "show")
 
 	if len(filtered) == 0 {
-		fmt.Println(fmt.Sprintf("[S%vE%v] Not found", season, episode))
+		fmt.Printf("[S%vE%v] Not found\n", season, episode)
 		wg.Done()
 		return
 	}
 
 	for _, result := range filtered {
 		properties := torrentio.GetPropertiesFromStream(result)
-		fmt.Println(fmt.Sprintf("[%s - S%vE%v] + %v", result.Version, season, episode, properties.Title))
+		fmt.Printf("[%s - S%vE%v] + %v\n", result.Version, season, episode, properties.Title)
 
 		err := debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
@@ -42,7 +42,7 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 	filtered := torrentio.FilterFormats(seasons, "show")
 
 	if len(filtered) == 0 {
-		fmt.Println(fmt.Sprintf("[S%v] No complete seasons found, searching for episodes", season))
+		fmt.Printf("[S%v] No complete seasons found, searching for episodes\n", season)
 		episodes := getEpisodeCountBySeason(season, details.Seasons)
 
 		if episodes == 0 {
@@ -64,7 +64,7 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 
 	for _, result := range filtered {
 		properties := torrentio.GetPropertiesFromStream(result)
-		fmt.Println(fmt.Sprintf("[%s - S%v] + %v", result.Version, season, properties.Title))
+		fmt.Printf("[%s - S%v] + %v\n", result.Version, season, properties.Title)
 
 		err := debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
