@@ -54,7 +54,7 @@ func AddMagnet(magnet string, files string) error {
 	case 401:
 		return fmt.Errorf("Bad token (expired, invalid)")
 	case 403:
-		return fmt.Errorf("Permission denied (account locked, not premium)")
+		return fmt.Errorf("Permission denied (account locked, not premium) or Infringing torrent")
 	case 503:
 		return fmt.Errorf("Service unavailable (see error message)")
 	default:

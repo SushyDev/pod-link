@@ -87,15 +87,16 @@ func FilterSeasons(streams []torrentio.Stream) ([]torrentio.Stream, error) {
 
 func FilterEpisodes(streams []torrentio.Stream) []torrentio.Stream {
 	var results []torrentio.Stream
+
+	settings := config.GetSettings()
+	token := settings.RealDebrid.Token
+
 	for i, stream := range streams {
 		url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
-		settings := config.GetSettings()
-		token := settings.RealDebrid.Token
-
 		url = strings.ReplaceAll(url, token, "")
 
 		split := strings.Split(url, "/")
-		if split[2] == "1" {
+		if (split[2] == "1" || split[2] == "null") {
 			results = append(results, streams[i])
 		}
 	}

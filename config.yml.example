@@ -23,21 +23,27 @@ shows:
     - "(?i)[. ]e\\d+[. ]"
     - "(?i)[. ]episode \\d+[. ]"
 
+movies:
+  max_files: 45
+
 versions:
   all:
-    - name: "4K and HDR"
+    - name: "4K HDR"
       include:
-        - "2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k"
-    - name: "1080P and HDR"
+        - "(?i)2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k"
+
+    - name: "4K"
       include:
-        - "1080p.*hdr|hdr.*1080p"
-    - name: "4K and not HDR"
-      include:
-        - "2160p|4k"
+        - "(?i)2160p|4k"
       exlude:
-        - "hdr"
-    - name: "1080P and not HDR"
+        - "(?i)hdr"
+
+    - name: "1080P HDR"
       include:
-        - "1080p"
+        - "(?i)1080p.*hdr|hdr.*1080p"
+
+    - name: "1080P"
+      include:
+        - "(?i)1080p"
       exlude:
-        - "hdr"
+        - "(?i)hdr"
