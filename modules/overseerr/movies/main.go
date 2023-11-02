@@ -7,7 +7,7 @@ import (
 	"pod-link/modules/config"
 )
 
-func GetDetails(id string) Movie {
+func GetDetails(id string) (Movie, error) {
 	settings := config.GetSettings()
 	host := settings.Overseerr.Host
 	token := settings.Overseerr.Token
@@ -16,8 +16,8 @@ func GetDetails(id string) Movie {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to create request")
+		return Movie{}, err
 	}
 
 	req.Header.Add("X-Api-Key", token)
@@ -26,8 +26,8 @@ func GetDetails(id string) Movie {
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to send request")
+		return Movie{}, err
 	}
 
 	defer response.Body.Close()
@@ -35,9 +35,9 @@ func GetDetails(id string) Movie {
 	var details Movie
 	err = json.NewDecoder(response.Body).Decode(&details)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to decode response")
+		return Movie{}, err
 	}
 
-	return details
+	return details, nil
 }

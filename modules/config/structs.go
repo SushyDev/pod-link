@@ -22,7 +22,12 @@ type Plex struct {
 }
 
 type Torrentio struct {
-    FilterURI string `yaml:"filter_uri"`
+	Shows struct {
+		FilterURI string `yaml:"filter_uri"`
+	} `yaml:"shows"`
+	Movies struct {
+		FilterURI string `yaml:"filter_uri"`
+	} `yaml:"movies"`
 }
 
 type Settings struct {
@@ -41,8 +46,8 @@ type Version struct {
 
 type Versions struct {
     All []Version `yaml:"all"`
-    Movie []Version `yaml:"movie"`
-    Show []Version `yaml:"show"`
+    Movies []Version `yaml:"movies"`
+    Shows []Version `yaml:"shows"`
 }
 
 type Shows struct {
@@ -50,9 +55,14 @@ type Shows struct {
     Episodes []string `yaml:"episodes"`
 }
 
+type Movies struct {
+	MaxFiles int `yaml:"max_files"`
+}
+
 type Config struct {
     Settings Settings `yaml:"settings"`
     Shows Shows `yaml:"shows"`
+	Movies Movies `yaml:"movies"`
     Versions Versions `yaml:"versions"`
 }
 

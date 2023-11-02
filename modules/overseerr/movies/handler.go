@@ -8,21 +8,79 @@ import (
 	"pod-link/modules/structs"
 	"pod-link/modules/torrentio"
 	torrentio_movies "pod-link/modules/torrentio/movies"
+	"strings"
 	"time"
 )
 
-func Request(notification structs.MediaAutoApprovedNotification) {
-	details := GetDetails(notification.Media.TmdbId)
+func FilterProperties(results []torrentio.Stream) []torrentio.Stream {
+	var filtered []torrentio.Stream
 
-	results := torrentio_movies.GetList(details.ExternalIds.ImdbId)
+	config := config.GetConfig()
+
 	for _, result := range results {
-		properties := torrentio.GetPropertiesFromStream(result)
+		properties, err := torrentio.GetPropertiesFromStream(result)
+		if err != nil {
+			fmt.Println("Failed to get properties. Skipping.")
+			fmt.Println(err)
+			continue
+		}
+
+		if properties.Files == "all" {
+			filtered = append(filtered, result)
+			continue
+		}
+
+		fileCount := len(strings.Split(properties.Files, ","))
+		maxFiles := config.Movies.MaxFiles
+
+		if fileCount <= maxFiles {
+			filtered = append(filtered, result)
+		}
+	}
+
+	return filtered
+}
+
+func Request(notification structs.MediaAutoApprovedNotification) {
+	details, err := GetDetails(notification.Media.TmdbId)
+	if err != nil {
+		fmt.Println("Failed to get details")
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Got request for", details.Title)
+
+	results, err := torrentio_movies.GetList(details.ExternalIds.ImdbId)
+	if err != nil {
+		fmt.Println("Failed to get results")
+		fmt.Println(err)
+		return
+	}
+
+	results = torrentio.FilterVersions(results, "movies")
+	results = FilterProperties(results)
+
+	if len(results) == 0 {
+		fmt.Println("No results found")
+		return
+	}
+
+	for _, result := range results {
+		properties, err := torrentio.GetPropertiesFromStream(result)
+		if err != nil {
+			fmt.Println("Failed to get properties. Skipping")
+			fmt.Println(err)
+			continue
+		}
 
 		fmt.Printf("[%s] %s\n", result.Version, properties.Title)
 
-		err := debrid.AddMagnet(properties.Link, properties.Files)
+		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Println("\033[31m", err, "\033[0m")
+			fmt.Println("Failed to add magnet. Skipping")
+			fmt.Println(err)
+			continue
 		}
 	}
 
@@ -35,8 +93,8 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 		time.Sleep(20 * time.Second)
 		err := plex.RefreshLibrary(movieId)
 		if err != nil {
-			fmt.Println(err)
 			fmt.Println("Failed to refresh library")
+			fmt.Println(err)
 		}
 	}
 }

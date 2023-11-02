@@ -40,10 +40,10 @@ func GetVersions(mediaType string) []Version {
 	versions := config.Versions.All
 
 	switch mediaType {
-	case "movie":
-		versions = append(versions, config.Versions.Movie...)
-	case "show":
-		versions = append(versions, config.Versions.Show...)
+	case "movies":
+		versions = append(versions, config.Versions.Movies...)
+	case "shows":
+		versions = append(versions, config.Versions.Shows...)
 	}
 
 	for i, iVersion := range versions {

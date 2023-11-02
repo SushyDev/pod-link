@@ -48,8 +48,9 @@ func getRequestedSeasons(extra []structs.Extra) []int {
 		for _, season := range list {
 			seasonNumber, err := strconv.Atoi(season)
 			if err != nil {
+				fmt.Println("Failed to convert season to int. Skipping")
 				fmt.Println(err)
-				fmt.Println("Failed to convert season to int")
+				continue
 			}
 
 			seasonNumbers = append(seasonNumbers, seasonNumber)
@@ -59,7 +60,7 @@ func getRequestedSeasons(extra []structs.Extra) []int {
 	return seasonNumbers
 }
 
-func GetDetails(id string) Tv {
+func GetDetails(id string) (Tv, error) {
 	settings := config.GetSettings()
 	host := settings.Overseerr.Host
 	token := settings.Overseerr.Token
@@ -77,8 +78,8 @@ func GetDetails(id string) Tv {
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to send request")
+		return Tv{}, err
 	}
 
 	defer response.Body.Close()
@@ -86,9 +87,9 @@ func GetDetails(id string) Tv {
 	var data Tv
 	err = json.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to decode response")
+		return Tv{}, err
 	}
 
-	return data
+	return data, nil
 }

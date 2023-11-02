@@ -7,22 +7,22 @@ import (
 	"pod-link/modules/torrentio"
 )
 
-func GetList(ImdbId string) []torrentio.Stream {
-	baseURL := torrentio.GetBaseURL()
+func GetList(ImdbId string) ([]torrentio.Stream, error) {
+	baseURL := torrentio.GetBaseURL("movies")
 	url := fmt.Sprintf("%s/stream/movie/%s.json", baseURL, ImdbId)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to create request")
+		return nil, err
 	}
 
 	client := &http.Client{}
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to send request")
+		return nil, err
 	}
 
 	defer response.Body.Close()
@@ -30,9 +30,9 @@ func GetList(ImdbId string) []torrentio.Stream {
 	var data torrentio.Response
 	err = json.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to decode response")
+		return nil, err
 	}
 
-	return torrentio.FilterFormats(data.Streams, "movie")
+	return data.Streams, nil
 }

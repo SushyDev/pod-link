@@ -3,7 +3,6 @@ package debrid
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -51,15 +50,15 @@ func AddMagnet(magnet string, files string) error {
 	case 201:
 		return selectFiles(data.Id, files)
 	case 400:
-		return errors.New("Bad Request (see error message)")
+		return fmt.Errorf("Bad Request (see error message)")
 	case 401:
-		return errors.New("Bad token (expired, invalid)")
+		return fmt.Errorf("Bad token (expired, invalid)")
 	case 403:
-		return errors.New("Permission denied (account locked, not premium)")
+		return fmt.Errorf("Permission denied (account locked, not premium)")
 	case 503:
-		return errors.New("Service unavailable (see error message)")
+		return fmt.Errorf("Service unavailable (see error message)")
 	default:
-		return errors.New("Unknown error")
+		return fmt.Errorf("Unknown error")
 	}
 }
 
@@ -88,13 +87,13 @@ func deleteFile(id string) error {
 	case 204:
 		return nil
 	case 401:
-		return errors.New("Bad token (expired, invalid)")
+		return fmt.Errorf("Bad token (expired, invalid)")
 	case 403:
-		return errors.New("Permission denied (account locked, not premium)")
+		return fmt.Errorf("Permission denied (account locked, not premium)")
 	case 404:
-		return errors.New("Unknown ressource (invalid id)")
+		return fmt.Errorf("Unknown ressource (invalid id)")
 	default:
-		return errors.New("Unknown error")
+		return fmt.Errorf("Unknown error")
 	}
 }
 
@@ -125,23 +124,23 @@ func selectFiles(id string, files string) error {
 
 	switch response.StatusCode {
 	case 202:
-		return errors.New("Action already done")
+		return fmt.Errorf("Action already done")
 	case 204:
 		return nil
 	case 400:
-		return errors.New("Bad Request (see error message)")
+		return fmt.Errorf("Bad Request (see error message)")
 	case 401:
-		return errors.New("Bad token (expired, invalid)")
+		return fmt.Errorf("Bad token (expired, invalid)")
 	case 403:
-		return errors.New("Permission denied (account locked, not premium)")
+		return fmt.Errorf("Permission denied (account locked, not premium)")
 	case 404:
 		err := deleteFile(id)
 		if err != nil {
 			return err
 		}
 
-		return errors.New("Wrong parameter (invalid file id(s)) / Unknown ressource (invalid id)")
+		return fmt.Errorf("Wrong parameter (invalid file id(s)) / Unknown ressource (invalid id)")
 	default:
-		return errors.New("Unknown error")
+		return fmt.Errorf("Unknown error")
 	}
 }

@@ -10,22 +10,22 @@ import (
 	"strings"
 )
 
-func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
-	baseURL := torrentio.GetBaseURL()
+func GetList(ImdbId string, Season int, Episode int) ([]torrentio.Stream, error) {
+	baseURL := torrentio.GetBaseURL("shows")
 	url := fmt.Sprintf("%s/stream/series/%s:%v:%v.json", baseURL, ImdbId, Season, Episode)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to create request")
+		return nil, err
 	}
 
 	client := &http.Client{}
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to send request")
+		return nil, err
 	}
 
 	defer response.Body.Close()
@@ -33,14 +33,14 @@ func GetList(ImdbId string, Season int, Episode int) []torrentio.Stream {
 	var data torrentio.Response
 	err = json.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
-		fmt.Println(err)
 		fmt.Println("Failed to decode response")
+		return nil, err
 	}
 
-	return data.Streams
+	return data.Streams, nil
 }
 
-func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
+func FilterSeasons(streams []torrentio.Stream) ([]torrentio.Stream, error) {
 	var results []torrentio.Stream
 
 	config := config.GetConfig()
@@ -50,7 +50,13 @@ func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
 		var isEpisodeMatch bool
 
 		for _, season := range config.Shows.Seasons {
-			isSeasonMatch = regexp.MustCompile(season).MatchString(stream.Title)
+			regex, err := regexp.Compile(season)
+			if err != nil {
+				fmt.Println("Error compiling regular expression")
+				return nil, err
+			}
+
+			isSeasonMatch = regex.MatchString(stream.Title)
 
 			if isSeasonMatch {
 				break
@@ -58,7 +64,13 @@ func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
 		}
 
 		for _, episode := range config.Shows.Episodes {
-			isEpisodeMatch = regexp.MustCompile(episode).MatchString(stream.Title)
+			regex, err := regexp.Compile(episode)
+			if err != nil {
+				fmt.Println("Error compiling regular expression")
+				return nil, err
+			}
+
+			isEpisodeMatch = regex.MatchString(stream.Title)
 
 			if isEpisodeMatch {
 				break
@@ -70,7 +82,7 @@ func FilterSeasons(streams []torrentio.Stream) []torrentio.Stream {
 		}
 	}
 
-	return results
+	return results, nil
 }
 
 func FilterEpisodes(streams []torrentio.Stream) []torrentio.Stream {

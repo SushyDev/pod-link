@@ -47,7 +47,10 @@ Make sure to only put the filter options and not the entire url.
 ```yml
 settings:
   torrentio:
-    filter_uri: "sort=qualitysize|qualityfilter=other,scr,cam,unknown"
+    shows:
+      filter_uri: "sort=qualitysize|qualityfilter=other,scr,cam,unknown"
+    movies:
+      filter_uri: "sort=qualitysize|qualityfilter=other,scr,cam,unknown"
 ```
 
 ### Shows
@@ -63,13 +66,20 @@ shows:
     - "(?i)[. ]episode \\d+[. ]"
 ```
 
+### Movies
+Here you can configure details about what results should be used for movies. For now the only thing you can configure is the max file count that a movie can have, you can use this to prevent `pod-link` from picking up results which ship lots of m2ts containers
+```yml
+movies:
+  max_files: 10
+```
+
 ### Versions
 Here you can configure all the versions of a movie/season/episode to download.
 You can configure them per media type or for all media types.
 Media types:
 - all
 - movies
-- tv
+- shows
 - anime (not implemented yet)
 
 As you can imagine all the versions in "all" will apply to all media types.
@@ -78,52 +88,8 @@ If you name a version "all" its include and exclude will be appended to all othe
 A version must have a name and can have either or both a list of include and exclude regex strings.
 Regex is handled by golang's default regex implementation so any limitations there will apply here.
 
-Example config.yml
-```yml
-settings:
-  real_debrid:
-    token:
-
-  overseerr:
-    host:
-    token:
-
-  plex:
-    host:
-    token:
-    tv_id:
-    movie_id:
-
-  torrentio:
-    filter_uri: "sort=qualitysize|qualityfilter=other,scr,cam,unknown"
-
-shows:
-  seasons:
-    - "(?i)[. ]s\\d+[. ]"
-    - "(?i)[. ]season \\d+[. ]"
-  episodes:
-    - "(?i)[. ]e\\d+[. ]"
-    - "(?i)[. ]episode \\d+[. ]"
-
-versions:
-  all:
-    - name: "4K and HDR"
-      include:
-        - "2160p.*hdr|hdr.*2160p|4k.*hdr|hdr.*4k"
-    - name: "1080P and HDR"
-      include:
-        - "1080p.*hdr|hdr.*1080p"
-    - name: "4K and not HDR"
-      include:
-        - "2160p|4k"
-      exlude:
-        - "hdr"
-    - name: "1080P and not HDR"
-      include:
-        - "1080p"
-      exlude:
-        - "hdr"
-```
+### Example config
+Open the config.yml in the repo files
 
 To make `pod-link` actually do something you must set the notification webhook in overseerr to the url of the project (by default `localhost:8080/webhook`)
 

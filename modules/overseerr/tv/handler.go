@@ -13,9 +13,16 @@ import (
 )
 
 func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
-	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
+	results, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
+	if err != nil {
+		fmt.Printf("[S%vE%v] Failed to get results\n", season, episode)
+		fmt.Println(err)
+		wg.Done()
+		return
+	}
+
 	episodes := torrentio_tv.FilterEpisodes(results)
-	filtered := torrentio.FilterFormats(episodes, "show")
+	filtered := torrentio.FilterVersions(episodes, "shows")
 
 	if len(filtered) == 0 {
 		fmt.Printf("[S%vE%v] Not found\n", season, episode)
@@ -24,12 +31,20 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 	}
 
 	for _, result := range filtered {
-		properties := torrentio.GetPropertiesFromStream(result)
+		properties, err := torrentio.GetPropertiesFromStream(result)
+		if err != nil {
+			fmt.Printf("[%s - S%vE%v] Failed to get properties\n", result.Version, season, episode)
+			fmt.Println(err)
+			continue
+		}
+
 		fmt.Printf("[%s - S%vE%v] + %v\n", result.Version, season, episode, properties.Title)
 
-		err := debrid.AddMagnet(properties.Link, properties.Files)
+		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Println("\033[31m", err, "\033[0m")
+			fmt.Printf("[%s - S%vE%v] Failed to add magnet\n", result.Version, season, episode)
+			fmt.Println(err)
+			continue
 		}
 	}
 
@@ -37,16 +52,31 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 }
 
 func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
-	results := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
-	seasons := torrentio_tv.FilterSeasons(results)
-	filtered := torrentio.FilterFormats(seasons, "show")
+	results, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
+	if err != nil {
+		fmt.Printf("[S%v] Failed to get results\n", season)
+		fmt.Println(err)
+		seasonWg.Done()
+		return
+	}
+
+
+	seasons, err := torrentio_tv.FilterSeasons(results)
+	if err != nil {
+		fmt.Printf("[S%v] Failed to filter seasons\n", season)
+		fmt.Println(err)
+		seasonWg.Done()
+		return
+	}
+
+	filtered := torrentio.FilterVersions(seasons, "shows")
 
 	if len(filtered) == 0 {
 		fmt.Printf("[S%v] No complete seasons found, searching for episodes\n", season)
 		episodes := getEpisodeCountBySeason(season, details.Seasons)
 
 		if episodes == 0 {
-			fmt.Println("[Season:", season, "] No episodes found")
+			fmt.Printf("[S%v] Failed to get episode count\n", season)
 			seasonWg.Done()
 			return
 		}
@@ -63,12 +93,20 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 	}
 
 	for _, result := range filtered {
-		properties := torrentio.GetPropertiesFromStream(result)
+		properties, err := torrentio.GetPropertiesFromStream(result)
+		if err != nil {
+			fmt.Printf("[%s - S%v] Failed to get properties\n", result.Version, season)
+			fmt.Println(err)
+			continue
+		}
+
 		fmt.Printf("[%s - S%v] + %v\n", result.Version, season, properties.Title)
 
-		err := debrid.AddMagnet(properties.Link, properties.Files)
+		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Println("\033[31m", err, "\033[0m")
+			fmt.Printf("[%s - S%v] Failed to add magnet\n", result.Version, season)
+			fmt.Println(err)
+			continue
 		}
 	}
 
@@ -76,14 +114,20 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 }
 
 func Request(notification structs.MediaAutoApprovedNotification) {
-	details := GetDetails(notification.Media.TmdbId)
+	details, err := GetDetails(notification.Media.TmdbId)
+	if err != nil {
+		fmt.Println("Failed to get details")
+		fmt.Println(err)
+		return
+	}
+
 	fmt.Println("Got request for", details.Name)
 
 	seasons := getRequestedSeasons(notification.Extra)
 	fmt.Println("Requested seasons:", seasons)
 
 	if len(seasons) == 0 {
-		fmt.Println("No seasons found, ending")
+		fmt.Println("No seasons found")
 		return
 	}
 
