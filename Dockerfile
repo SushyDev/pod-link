@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o main .
+RUN go mod tidy
 
-CMD ["/app/main"]
+RUN go build
+
+CMD ["/app/pod-link"]
