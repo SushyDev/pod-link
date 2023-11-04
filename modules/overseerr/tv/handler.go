@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"pod-link/modules/config"
 	"pod-link/modules/debrid"
+	overseerr_api "pod-link/modules/overseerr/api"
+	overseerr "pod-link/modules/overseerr/structs"
 	"pod-link/modules/plex"
 	"pod-link/modules/structs"
 	"pod-link/modules/torrentio"
 	torrentio_tv "pod-link/modules/torrentio/tv"
+	"strconv"
 	"sync"
 	"time"
 )
 
-func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
-	results, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
+func FindByEpisode(season int, episode int, details overseerr.TvDetails, wg *sync.WaitGroup) {
+	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
 	if err != nil {
 		fmt.Printf("[S%vE%v] Failed to get results\n", season, episode)
 		fmt.Println(err)
@@ -21,28 +24,32 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 		return
 	}
 
-	episodes := torrentio_tv.FilterEpisodes(results)
-	filtered := torrentio.FilterVersions(episodes, "shows")
+	streams = torrentio_tv.FilterEpisodes(streams)
+	streams = torrentio.FilterVersions(streams, "shows")
 
-	if len(filtered) == 0 {
+	if len(streams) == 0 {
 		fmt.Printf("[S%vE%v] Not found\n", season, episode)
 		wg.Done()
 		return
 	}
 
-	for _, result := range filtered {
-		properties, err := torrentio.GetPropertiesFromStream(result)
+	for _, stream := range streams {
+		properties, err := torrentio.GetPropertiesFromStream(stream)
 		if err != nil {
-			fmt.Printf("[%s - S%vE%v] Failed to get properties\n", result.Version, season, episode)
+			fmt.Printf("[%s - S%vE%v] Failed to get properties\n", stream.Version, season, episode)
 			fmt.Println(err)
 			continue
 		}
 
-		fmt.Printf("[%s - S%vE%v] + %v\n", result.Version, season, episode, properties.Title)
+		if !torrentio.MatchesProperties(stream, properties) {
+			continue
+		}
+
+		fmt.Printf("[%s - S%vE%v] + %v\n", stream.Version, season, episode, properties.Title)
 
 		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Printf("[%s - S%vE%v] Failed to add magnet\n", result.Version, season, episode)
+			fmt.Printf("[%s - S%vE%v] Failed to add magnet\n", stream.Version, season, episode)
 			fmt.Println(err)
 			continue
 		}
@@ -51,8 +58,8 @@ func FindByEpisode(season int, episode int, details Tv, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
-	results, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
+func FindBySeason(season int, details overseerr.TvDetails, seasonWg *sync.WaitGroup) {
+	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
 	if err != nil {
 		fmt.Printf("[S%v] Failed to get results\n", season)
 		fmt.Println(err)
@@ -61,7 +68,7 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 	}
 
 
-	seasons, err := torrentio_tv.FilterSeasons(results)
+	streams, err = torrentio_tv.FilterSeasons(streams)
 	if err != nil {
 		fmt.Printf("[S%v] Failed to filter seasons\n", season)
 		fmt.Println(err)
@@ -69,20 +76,27 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 		return
 	}
 
-	filtered := torrentio.FilterVersions(seasons, "shows")
+	streams = torrentio.FilterVersions(streams, "shows")
 
-	if len(filtered) == 0 {
+	if len(streams) == 0 {
 		fmt.Printf("[S%v] No complete seasons found, searching for episodes\n", season)
-		episodes := getEpisodeCountBySeason(season, details.Seasons)
 
-		if episodes == 0 {
+		episodes, err := getEpisodeCountBySeason(details.ID, season)
+		if err != nil {
+			fmt.Printf("[S%v] Failed to get episode count\n", season)
+			fmt.Println(err)
+			seasonWg.Done()
+			return
+		}
+
+		if len(episodes) == 0 {
 			fmt.Printf("[S%v] Failed to get episode count\n", season)
 			seasonWg.Done()
 			return
 		}
 
 		var episodesWg sync.WaitGroup
-		for episode := 1; episode <= episodes; episode++ {
+		for _, episode := range episodes {
 			episodesWg.Add(1)
 			go FindByEpisode(season, episode, details, &episodesWg)
 		}
@@ -92,19 +106,23 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 		return
 	}
 
-	for _, result := range filtered {
-		properties, err := torrentio.GetPropertiesFromStream(result)
+	for _, stream := range streams {
+		properties, err := torrentio.GetPropertiesFromStream(stream)
 		if err != nil {
-			fmt.Printf("[%s - S%v] Failed to get properties\n", result.Version, season)
+			fmt.Printf("[%s - S%v] Failed to get properties\n", stream.Version, season)
 			fmt.Println(err)
 			continue
 		}
 
-		fmt.Printf("[%s - S%v] + %v\n", result.Version, season, properties.Title)
+		if !torrentio.MatchesProperties(stream, properties) {
+			continue
+		}
+
+		fmt.Printf("[%s - S%v] + %v\n", stream.Version, season, properties.Title)
 
 		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Printf("[%s - S%v] Failed to add magnet\n", result.Version, season)
+			fmt.Printf("[%s - S%v] Failed to add magnet\n", stream.Version, season)
 			fmt.Println(err)
 			continue
 		}
@@ -113,23 +131,15 @@ func FindBySeason(season int, details Tv, seasonWg *sync.WaitGroup) {
 	seasonWg.Done()
 }
 
-func Request(notification structs.MediaAutoApprovedNotification) {
-	details, err := GetDetails(notification.Media.TmdbId)
+func FindById(tvId int, seasons []int) {
+	details, err := overseerr_api.GetTvDetails(tvId)
 	if err != nil {
 		fmt.Println("Failed to get details")
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Got request for", details.Name)
-
-	seasons := getRequestedSeasons(notification.Extra)
-	fmt.Println("Requested seasons:", seasons)
-
-	if len(seasons) == 0 {
-		fmt.Println("No seasons found")
-		return
-	}
+	fmt.Printf("[%v] %s\n", details.MediaInfo.TmdbID, details.OriginalName)
 
 	var seasonWg sync.WaitGroup
 	for _, season := range seasons {
@@ -138,6 +148,27 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 	}
 
 	seasonWg.Wait()
+}
+
+
+func Request(notification structs.MediaAutoApprovedNotification) {
+	TmdbId, err := strconv.Atoi(notification.Media.TmdbId)
+	if err != nil {
+		fmt.Println("Failed to convert tmdb id to int")
+		fmt.Println(err)
+		return
+	}
+
+	seasons := getRequestedSeasons(notification.Extra)
+
+	if len(seasons) == 0 {
+		fmt.Println("No seasons requested")
+		return
+	}
+
+	fmt.Println("Requested seasons:", seasons)
+
+	FindById(TmdbId, seasons)
 
 	settings := config.GetSettings()
 	host := settings.Plex.Host

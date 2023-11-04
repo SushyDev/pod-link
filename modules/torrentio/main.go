@@ -50,6 +50,16 @@ func GetBaseURL(mediaType string) string {
 	return url
 }
 
+func getEmojiString(input []string) string {
+	for _, title := range input {
+		if strings.Contains(title, "👤") && strings.Contains(title, "💾") && strings.Contains(title, "⚙️") {
+			return title
+		}
+	}
+
+	return ""
+}
+
 func getEmojiValues(input string) ([]string, error) {
 	pattern := `👤\s(.*?)\s💾\s(.*?)\s⚙️\s(.*$)`
 
@@ -78,14 +88,8 @@ func getMagnet(input string) (string, string) {
 func GetPropertiesFromStream(stream Stream) (Properties, error) {
 	var properties Properties
 
-	emojiString := ""
-
 	titleSplit := strings.Split(stream.Title, "\n")
-	for _, title := range titleSplit {
-		if strings.Contains(title, "👤") && strings.Contains(title, "💾") && strings.Contains(title, "⚙️") {
-			emojiString = title
-		}
-	}
+	emojiString := getEmojiString(titleSplit)
 
 	emojiValues, err := getEmojiValues(emojiString)
 	if err != nil {
@@ -136,7 +140,6 @@ func getByVersion(version config.Version, streams []Stream) (Stream, error) {
 			}
 		}
 
-
 		if match {
 			return stream, nil
 		}
@@ -149,7 +152,6 @@ func FilterVersions(streams []Stream, mediaType string) []Stream {
 	var results []Stream
 
 	versions := config.GetVersions(mediaType)
-
 	for _, version := range versions {
 		result, err := getByVersion(version, streams)
 		if err != nil {
@@ -173,4 +175,19 @@ func FilterVersions(streams []Stream, mediaType string) []Stream {
 	}
 
 	return results
+}
+
+func MatchesProperties(stream Stream, properties Properties) bool {
+	if properties.Files == "all" || properties.Files == "" {
+		return true
+	}
+
+	fileCount := len(strings.Split(properties.Files, ","))
+	maxFiles := config.GetConfig().Movies.MaxFiles
+
+	if fileCount <= maxFiles {
+		return true
+	}
+
+	return false
 }

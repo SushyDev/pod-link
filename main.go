@@ -1,87 +1,73 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"pod-link/modules/config"
+	"os"
+	overseerr "pod-link/modules/overseerr"
 	overseerr_movies "pod-link/modules/overseerr/movies"
+	overseerr_structs "pod-link/modules/overseerr/structs"
 	overseerr_tv "pod-link/modules/overseerr/tv"
-	"pod-link/modules/structs"
+	"pod-link/modules/webhook"
 )
 
-type RequestData struct {
-	NotificationType string `json:"notification_type"`
-}
+func missingTvContent(requestDetails overseerr_structs.MediaRequest) {
+	seasons := overseerr.FilterCompleteSeasons(requestDetails)
 
-func handleNotification(notificationType string, body []byte) error {
-	switch notificationType {
-	case "MEDIA_AUTO_APPROVED":
-		var mediaAutoApprovedNotification structs.MediaAutoApprovedNotification
-		err := json.Unmarshal(body, &mediaAutoApprovedNotification)
-		if err != nil {
-			return err
-		}
-
-		handleMediaAutoApprovedNotification(mediaAutoApprovedNotification)
-	default:
-		fmt.Println("Unknown notification type")
+	if len(seasons) == 0 {
+		fmt.Printf("[%v] No incomplete seasons\n", requestDetails.ID)
+		return
 	}
 
-	return nil
+	overseerr_tv.FindById(requestDetails.Media.TmdbID, seasons)
 }
 
-func handleMediaAutoApprovedNotification(notification structs.MediaAutoApprovedNotification) {
-	switch notification.Media.MediaType {
-	case "movie":
-		overseerr_movies.Request(notification)
-	case "tv":
-		overseerr_tv.Request(notification)
+func missingMovieContent(requestDetails overseerr_structs.MediaRequest) {
+	overseerr_movies.FindById(requestDetails.Media.TmdbID)
+}
+
+func missingContent() {
+	requests, err := overseerr.GetPendingRequests()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// filteredRequests, err := overseerr.FilterRequests(requests.Results)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	for _, request := range requests.Results {
+		requestDetails, err := overseerr.GetRequestDetails(request.ID)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		switch(requestDetails.Media.MediaType) {
+		case "movie":
+			missingMovieContent(requestDetails)
+		case "tv":
+			missingTvContent(requestDetails)
+		}
+
 	}
 }
 
 func main() {
-	settings := config.GetSettings()
-	port := settings.Pod.Port
-	if port == "" {
-		port = "8080"
+	args := os.Args[1:]
+
+	if len(args) == 0 {
+		webhook.Listen()
+		return
 	}
 
-	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			fmt.Println("Only POST requests are allowed")
-			return
-		}
-
-		if r.Header.Get("Authorization") != settings.Pod.Authorization {
-			fmt.Println("Unauthorized")
-			return
-		}
-
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		var requestData RequestData
-		err = json.Unmarshal(body, &requestData)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		err = handleNotification(requestData.NotificationType, body)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println("Finished!")
-	})
-
-	log.Println("listening on", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	switch args[0] {
+	case "missing-content":
+		missingContent()
+	default:
+		err := fmt.Errorf("Unknown command")
+		fmt.Println(err)
+	}
 }

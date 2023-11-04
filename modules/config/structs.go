@@ -1,24 +1,24 @@
 package config
 
 type Pod struct {
-    Port string `yaml:"port"`
-    Authorization string `yaml:"authorization"`
+	Port          string `yaml:"port"`
+	Authorization string `yaml:"authorization"`
 }
 
 type RealDebrid struct {
-    Token string `yaml:"token"`
+	Token string `yaml:"token"`
 }
 
 type Overseerr struct {
-    Host string `yaml:"host"`
-    Token string `yaml:"token"`
+	Host  string `yaml:"host"`
+	Token string `yaml:"token"`
 }
 
 type Plex struct {
-    Host string `yaml:"host"`
-    Token string `yaml:"token"`
-    TvId string `yaml:"tv_id"`
-    MovieId string `yaml:"movie_id"`
+	Host    string `yaml:"host"`
+	Token   string `yaml:"token"`
+	TvId    string `yaml:"tv_id"`
+	MovieId string `yaml:"movie_id"`
 }
 
 type Torrentio struct {
@@ -31,28 +31,28 @@ type Torrentio struct {
 }
 
 type Settings struct {
-    Pod Pod `yaml:"pod"`
-    RealDebrid RealDebrid `yaml:"real_debrid"`
-    Overseerr Overseerr `yaml:"overseerr"`
-    Plex Plex `yaml:"plex"`
-    Torrentio Torrentio `yaml:"torrentio"`
+	Pod        Pod        `yaml:"pod"`
+	RealDebrid RealDebrid `yaml:"real_debrid"`
+	Overseerr  Overseerr  `yaml:"overseerr"`
+	Plex       Plex       `yaml:"plex"`
+	Torrentio  Torrentio  `yaml:"torrentio"`
 }
 
 type Version struct {
-    Name string `yaml:"name"`
-    Include []string `yaml:"include"`
-    Exclude []string `yaml:"exclude"`
+	Name    string   `yaml:"name"`
+	Include []string `yaml:"include"`
+	Exclude []string `yaml:"exclude"`
 }
 
 type Versions struct {
-    All []Version `yaml:"all"`
-    Movies []Version `yaml:"movies"`
-    Shows []Version `yaml:"shows"`
+	All    []Version `yaml:"all"`
+	Movies []Version `yaml:"movies"`
+	Shows  []Version `yaml:"shows"`
 }
 
 type Shows struct {
-    Seasons []string `yaml:"seasons"`
-    Episodes []string `yaml:"episodes"`
+	Seasons  []string `yaml:"seasons"`
+	Episodes []string `yaml:"episodes"`
 }
 
 type Movies struct {
@@ -60,9 +60,8 @@ type Movies struct {
 }
 
 type Config struct {
-    Settings Settings `yaml:"settings"`
-    Shows Shows `yaml:"shows"`
-	Movies Movies `yaml:"movies"`
-    Versions Versions `yaml:"versions"`
+	Settings Settings `yaml:"settings"`
+	Shows    Shows    `yaml:"shows"`
+	Movies   Movies   `yaml:"movies"`
+	Versions Versions `yaml:"versions"`
 }
-

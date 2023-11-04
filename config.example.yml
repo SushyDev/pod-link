@@ -1,0 +1,54 @@
+settings: 
+  real_debrid:
+    token:
+
+  overseerr:
+    host:
+    token:
+
+  plex:
+    host:
+    token:
+    tv_id:
+    movie_id:
+
+  torrentio:
+    shows:
+      filter_uri: "providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex|sort=qualitysize|qualityfilter=other,scr,cam,unknown|sizefilter=50GB"
+    movies:
+      filter_uri: "providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex|sort=qualitysize|qualityfilter=other,scr,cam,unknown|sizefilter=100GB"
+
+shows:
+  seasons:
+    - "(?i)[. ]s\\d+[. ]"
+    - "(?i)[. ]season \\d+[. ]"
+  episodes:
+    - "(?i)[. ]e\\d+[. ]"
+    - "(?i)[. ]episode \\d+[. ]"
+
+movies:
+  max_files: 45
+
+versions:
+  all:
+    - name: "4K HDR"
+      include:
+        - "(?i)2160p|4k"
+        - "(?i).hdr"
+
+    - name: "4K"
+      include:
+        - "(?i)2160p|4k"
+      exclude:
+        - "(?i).hdr"
+
+    - name: "1080P HDR"
+      include:
+        - "(?i)1080p"
+        - "(?i).hdr"
+
+    - name: "1080P"
+      include:
+        - "(?i)1080p"
+      exclude:
+        - "(?i).hdr"
