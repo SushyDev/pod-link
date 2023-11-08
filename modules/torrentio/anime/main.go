@@ -1,4 +1,4 @@
-package anime
+package torrentio_anime
 
 import (
 	"encoding/json"

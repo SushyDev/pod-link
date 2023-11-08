@@ -1,28 +1,27 @@
-package movies
+package overseerr_movies
 
 import (
 	"fmt"
 	"pod-link/modules/debrid"
-	overseerr_api "pod-link/modules/overseerr/api"
-	"pod-link/modules/structs"
 	"pod-link/modules/torrentio"
 	torrentio_movies "pod-link/modules/torrentio/movies"
+	overseerr_structs "pod-link/modules/overseerr/structs"
 	"strconv"
 )
 
-func Request(notification structs.MediaAutoApprovedNotification) {
-	TmdbId, err := strconv.Atoi(notification.Media.TmdbId)
+func Request(notification overseerr_structs.MediaAutoApprovedNotification) {
+	movieId, err := strconv.Atoi(notification.Media.TmdbId)
 	if err != nil {
 		fmt.Println("Failed to convert tmdb id to int")
 		fmt.Println(err)
 		return
 	}
 
-	FindById(TmdbId)
+	FindById(movieId)
 }
 
 func FindById(movieId int) {
-	details, err := overseerr_api.GetMovieDetails(movieId)
+	details, err := GetMovieDetails(movieId)
 	if err != nil {
 		fmt.Println("Failed to get details")
 		fmt.Println(err)

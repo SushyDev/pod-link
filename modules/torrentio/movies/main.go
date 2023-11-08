@@ -1,4 +1,4 @@
-package movies
+package torrentio_movies
 
 import (
 	"encoding/json"

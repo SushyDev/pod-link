@@ -8,13 +8,12 @@ import (
 	"net/http"
 	"pod-link/modules/config"
 	overseerr "pod-link/modules/overseerr"
-	"pod-link/modules/structs"
+	overseerr_structs "pod-link/modules/overseerr/structs"
 )
 
 type RequestData struct {
 	NotificationType string `json:"notification_type"`
 }
-
 
 func Listen() {
 	settings := config.GetSettings()
@@ -61,18 +60,18 @@ func Listen() {
 }
 
 func handleNotification(notificationType string, body []byte) error {
-    switch notificationType {
-    case "MEDIA_AUTO_APPROVED":
-        var mediaAutoApprovedNotification structs.MediaAutoApprovedNotification
-        err := json.Unmarshal(body, &mediaAutoApprovedNotification)
-        if err != nil {
-            return err
-        }
+	switch notificationType {
+	case "MEDIA_AUTO_APPROVED":
+		var mediaAutoApprovedNotification overseerr_structs.MediaAutoApprovedNotification
+		err := json.Unmarshal(body, &mediaAutoApprovedNotification)
+		if err != nil {
+			return err
+		}
 
-        overseerr.HandleMediaAutoApprovedNotification(mediaAutoApprovedNotification)
-    default:
-        fmt.Printf("Unknown notification type: %s\n", notificationType)
-    }
+		overseerr.HandleMediaAutoApprovedNotification(mediaAutoApprovedNotification)
+	default:
+		fmt.Printf("Unknown notification type: %s\n", notificationType)
+	}
 
-    return nil
+	return nil
 }

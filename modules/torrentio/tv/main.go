@@ -1,4 +1,4 @@
-package tv
+package torrentio_tv
 
 import (
 	"encoding/json"

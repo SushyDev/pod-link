@@ -22,6 +22,7 @@ settings:
 ```
 
 ### Overseerr
+To make `pod-link` actually do something you must set the notification webhook in overseerr to the url of the project (by default `localhost:8080/webhook`)
 ```yml
 settings:
   overseerr:
@@ -89,9 +90,7 @@ A version must have a name and can have either or both a list of include and exc
 Regex is handled by golang's default regex implementation so any limitations there will apply here.
 
 ### Example config
-Open the config.yml in the repo files
-
-To make `pod-link` actually do something you must set the notification webhook in overseerr to the url of the project (by default `localhost:8080/webhook`)
+Open the `config.example.yml` in the repo files
 
 ## Credits
 [Plex Debrid](https://github.com/itsToggle/plex_debrid/) A lot of the inspiration

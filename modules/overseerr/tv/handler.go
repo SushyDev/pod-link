@@ -1,21 +1,16 @@
-package tv
+package overseerr_tv
 
 import (
 	"fmt"
-	"pod-link/modules/config"
 	"pod-link/modules/debrid"
-	overseerr_api "pod-link/modules/overseerr/api"
-	overseerr "pod-link/modules/overseerr/structs"
-	"pod-link/modules/plex"
-	"pod-link/modules/structs"
+	overseerr_structs "pod-link/modules/overseerr/structs"
 	"pod-link/modules/torrentio"
 	torrentio_tv "pod-link/modules/torrentio/tv"
 	"strconv"
 	"sync"
-	"time"
 )
 
-func FindByEpisode(season int, episode int, details overseerr.TvDetails, wg *sync.WaitGroup) {
+func FindByEpisode(season int, episode int, details overseerr_structs.TvDetails, wg *sync.WaitGroup) {
 	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
 	if err != nil {
 		fmt.Printf("[S%vE%v] Failed to get results\n", season, episode)
@@ -58,7 +53,7 @@ func FindByEpisode(season int, episode int, details overseerr.TvDetails, wg *syn
 	wg.Done()
 }
 
-func FindBySeason(season int, details overseerr.TvDetails, seasonWg *sync.WaitGroup) {
+func FindBySeason(season int, details overseerr_structs.TvDetails, seasonWg *sync.WaitGroup) {
 	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
 	if err != nil {
 		fmt.Printf("[S%v] Failed to get results\n", season)
@@ -132,7 +127,7 @@ func FindBySeason(season int, details overseerr.TvDetails, seasonWg *sync.WaitGr
 }
 
 func FindById(tvId int, seasons []int) {
-	details, err := overseerr_api.GetTvDetails(tvId)
+	details, err := GetTvDetails(tvId)
 	if err != nil {
 		fmt.Println("Failed to get details")
 		fmt.Println(err)
@@ -151,7 +146,7 @@ func FindById(tvId int, seasons []int) {
 }
 
 
-func Request(notification structs.MediaAutoApprovedNotification) {
+func Request(notification overseerr_structs.MediaAutoApprovedNotification) {
 	TmdbId, err := strconv.Atoi(notification.Media.TmdbId)
 	if err != nil {
 		fmt.Println("Failed to convert tmdb id to int")
@@ -169,18 +164,4 @@ func Request(notification structs.MediaAutoApprovedNotification) {
 	fmt.Println("Requested seasons:", seasons)
 
 	FindById(TmdbId, seasons)
-
-	settings := config.GetSettings()
-	host := settings.Plex.Host
-	token := settings.Plex.Token
-	tvId := settings.Plex.TvId
-
-	if host != "" && token != "" && tvId != "" {
-		time.Sleep(20 * time.Second)
-		err := plex.RefreshLibrary(tvId)
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("Failed to refresh library")
-		}
-	}
 }
