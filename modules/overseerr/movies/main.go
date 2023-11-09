@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/textproto"
 	"pod-link/modules/config"
 	overseerr_structs "pod-link/modules/overseerr/structs"
 )
@@ -17,11 +16,11 @@ func GetMovieDetails(movieId int) (overseerr_structs.MovieDetails, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Failed to create request")
 		return overseerr_structs.MovieDetails{}, err
 	}
 
-	textproto.MIMEHeader(req.Header).Add("X-Api-Key", token)
+	req.Header.Add("X-Api-Key", token)
 
 	client := &http.Client{}
 

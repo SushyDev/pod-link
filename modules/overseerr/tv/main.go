@@ -105,30 +105,27 @@ func findBySeason(details overseerr_structs.TvDetails, season int, seasonWg *syn
 		}
 
 		episodesWg.Wait()
-		seasonWg.Done()
+	} else {
+		for _, stream := range streams {
+			properties, err := torrentio.GetPropertiesFromStream(stream)
+			if err != nil {
+				fmt.Printf("[%v - S%v - %s] Failed to get properties\n", tvId, season, stream.Version)
+				fmt.Println(err)
+				continue
+			}
 
-		return
-	}
+			if !torrentio.MatchesProperties(stream, properties) {
+				continue
+			}
 
-	for _, stream := range streams {
-		properties, err := torrentio.GetPropertiesFromStream(stream)
-		if err != nil {
-			fmt.Printf("[%v - S%v - %s] Failed to get properties\n", tvId, season, stream.Version)
-			fmt.Println(err)
-			continue
-		}
+			fmt.Printf("[%v - S%v - %s] + %v\n", tvId, season, stream.Version, properties.Title)
 
-		if !torrentio.MatchesProperties(stream, properties) {
-			continue
-		}
-
-		fmt.Printf("[%v - S%v - %s] + %v\n", tvId, season, stream.Version, properties.Title)
-
-		err = debrid.AddMagnet(properties.Link, properties.Files)
-		if err != nil {
-			fmt.Printf("[%v S%v - %s] Failed to add magnet\n", tvId, season, stream.Version)
-			fmt.Println(err)
-			continue
+			err = debrid.AddMagnet(properties.Link, properties.Files)
+			if err != nil {
+				fmt.Printf("[%v S%v - %s] Failed to add magnet\n", tvId, season, stream.Version)
+				fmt.Println(err)
+				continue
+			}
 		}
 	}
 
@@ -178,6 +175,7 @@ func findBySeasonPlex(details overseerr_structs.TvDetails, season int, seasonWg 
 		if len(releasedEpisodes) == len(seasonEpisodes) {
 			fmt.Printf("[%v - S%v] Season is fully released, searching for complete season\n", tvId, season)
 
+			seasonWg.Add(1)
 			go findBySeason(details, season, seasonWg)
 		} else {
 			fmt.Printf("[%v - S%v] Season is not fully released, searching for episodes\n", tvId, season)

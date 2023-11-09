@@ -54,4 +54,3 @@ type PlexSettings struct {
 	Libraries []PlexLibrary `json:"libraries"`
 	WebAppURL string        `json:"webAppUrl"`
 }
-

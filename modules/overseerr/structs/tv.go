@@ -105,12 +105,12 @@ type TvDetails struct {
 	Type                string              `json:"type"`
 	VoteAverage         float64             `json:"voteAverage"`
 	VoteCount           int                 `json:"voteCount"`
-	Credits         struct {
+	Credits             struct {
 		Cast []Cast `json:"cast"`
 		Crew []Crew `json:"crew"`
 	} `json:"credits"`
-	ExternalIds         ExternalIds         `json:"externalIds"`
-	Keywords            []Keyword           `json:"keywords"`
-	MediaInfo           MediaInfo           `json:"mediaInfo"`
-	WatchProviders      []WatchProvider     `json:"watchProviders"`
+	ExternalIds    ExternalIds     `json:"externalIds"`
+	Keywords       []Keyword       `json:"keywords"`
+	MediaInfo      MediaInfo       `json:"mediaInfo"`
+	WatchProviders []WatchProvider `json:"watchProviders"`
 }

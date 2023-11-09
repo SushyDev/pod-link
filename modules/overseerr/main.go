@@ -15,7 +15,14 @@ func getServerConnection(connections []overseerr_structs.PlexConnection) (overse
 	return overseerr_structs.PlexConnection{}, nil
 }
 
+var plexToken string
+var plexHost string
+
 func GetPlexTokenAndHost() (string, string, error) {
+	if plexToken != "" && plexHost != "" {
+		return plexToken, plexHost, nil
+	}
+
 	plexSettings, err := overseerr_settings.GetPlexSettings()
 	if err != nil {
 		return "", "", err
@@ -34,6 +41,9 @@ func GetPlexTokenAndHost() (string, string, error) {
 			if err != nil {
 				return "", "", err
 			}
+
+			plexToken = server.AccessToken
+			plexHost = connection.Uri
 
 			return server.AccessToken, connection.Uri, nil
 		}
