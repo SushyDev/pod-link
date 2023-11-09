@@ -1,4 +1,8 @@
 settings: 
+  pod:
+    missing_content:
+      request_age: 24
+
   real_debrid:
     token:
 
@@ -7,8 +11,6 @@ settings:
     token:
 
   plex:
-    host:
-    token:
     tv_id:
     movie_id:
 

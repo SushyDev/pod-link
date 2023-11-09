@@ -5,12 +5,15 @@ Narrowed down alternative to plex debrid. Specifically combining the power of Ov
 
 # Configuration
 ### pod-link
-you can configure `pod-link`'s settings:
+configure the port that pod-link lives on and configure a header authorization code that must match the one in overseerr's webhook settings. Configure the minimum request age for missing content scanning, defauls are suggested
+
 ```yml
 settings:
   pod:
     port: 42069
     authorization: "Overseerr notification webhook Authorization Header"
+    missing_content:
+      request_age: 24
 ```
 
 ### Real Debrid
@@ -31,12 +34,10 @@ settings:
 ```
 
 ### Plex
-Get your [plex token](https://github.com/SushyDev/plex-oauth) or [here](https://plex.tv/devices.xml) and get your libary id's
+Get your plex library id's [here](https://plex.tv/devices.xml)
 ```yml
 settings:
   plex:
-    host: "http://localhost:32400"
-    token: "TOKEN"
     tv_id: 1
     movie_id: 2
 ```

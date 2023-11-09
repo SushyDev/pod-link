@@ -1,8 +1,11 @@
 package config
 
 type Pod struct {
-	Port          string `yaml:"port"`
-	Authorization string `yaml:"authorization"`
+	Port           string `yaml:"port"`
+	Authorization  string `yaml:"authorization"`
+	MissingContent struct {
+		RequestAge float64 `yaml:"request_age"`
+	} `yaml:"missing_content"`
 }
 
 type RealDebrid struct {
