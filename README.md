@@ -1,11 +1,26 @@
 # pod-link
 Narrowed down alternative to plex debrid. Specifically combining the power of Overseerr, Torrentio and Real debrid.
 ## Build
-`go build main.go`
+```sh
+go build main.go
+```
+Docker:
+```sh
+docker build -t pod-link:latest .
+```
 
-# Configuration
+## Run
+```sh
+pod-link
+```
+Docker:
+```
+docker run --name pod-link --network host pod-link
+```
+
+## Configuration
 ### pod-link
-configure the port that pod-link lives on and configure a header authorization code that must match the one in overseerr's webhook settings. Configure the minimum request age for missing content scanning, defauls are suggested
+configure the port that `pod-link` lives on and configure a header authorization code that must match the one in overseerr's webhook settings. Configure the minimum request age for missing content scanning, defauls are suggested
 
 ```yml
 settings:
@@ -92,6 +107,27 @@ Regex is handled by golang's default regex implementation so any limitations the
 
 ### Example config
 Open the `config.example.yml` in the repo files
+
+## Missing content scanning
+`pod-link` can look at overseerr requests that have not been (fully) completed yet and try to complete them. This is useful for series that are still releasing new episodes, it will periodically check if a new episode has been released and add it. Another usecase would be media that has become unavailable, then it will search for that media again and mostlikely find something for in its place.
+
+### How to use
+You can trigger a scan by running `pod-link missing-content` and it will automatically do its thing and close once the job is done. Most people will probably want to run this command periodically, I recommend running a `crontab` or something similar on the machine you're running `pod-link` on.
+
+Add to your contab using:
+```sh
+crontab -e
+```
+
+Example:
+```sh
+0 */12 * * * pod-link missing-content
+```
+Docker:
+```sh
+0 */12 * * * docker exec pod-link /app/pod-link missing-content
+```
+
 
 ## Credits
 [Plex Debrid](https://github.com/itsToggle/plex_debrid/) A lot of the inspiration
