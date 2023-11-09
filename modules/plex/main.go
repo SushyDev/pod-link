@@ -37,19 +37,30 @@ func RefreshLibrary(id string) error {
 	return nil
 }
 
-func GetTvMetadata(ratingKey string) (TvMetadata, error) {
+func GetEpisodesBySeason(video ([]Video), season int) []Video {
+	var episodes []Video
+	for _, episode := range video {
+		if episode.ParentIndex == fmt.Sprintf("%v", season) {
+			episodes = append(episodes, episode)
+		}
+	}
+
+	return episodes
+}
+
+func GetShowLeaves(ratingKey string) (ShowLeaves, error) {
 	token, host, err := overseerr.GetPlexTokenAndHost()
 	if err != nil {
 		fmt.Println("Failed to get plex token and host")
-		return TvMetadata{}, err
+		return ShowLeaves{}, err
 	}
 
-	url := fmt.Sprintf("%s/library/metadata/%v/children?X-Plex-Token=%s", host, ratingKey, token)
+	url := fmt.Sprintf("%s/library/metadata/%v/allLeaves?X-Plex-Token=%s", host, ratingKey, token)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Failed to create request")
-		return TvMetadata{}, err
+		return ShowLeaves{}, err
 	}
 
 	client := &http.Client{}
@@ -57,58 +68,17 @@ func GetTvMetadata(ratingKey string) (TvMetadata, error) {
 	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Failed to send request")
-		return TvMetadata{}, err
+		return ShowLeaves{}, err
 	}
 
 	defer response.Body.Close()
 
-	var data TvMetadata
+	var data ShowLeaves
 	err = xml.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
 		fmt.Println("Failed to decode response")
-		return TvMetadata{}, err
+		return ShowLeaves{}, err
 	}
 
 	return data, nil
-}
-
-func GetSeasonMetadata(ratingKey string) {
-	token, host, err := overseerr.GetPlexTokenAndHost()
-	if err != nil {
-		fmt.Println("Failed to get plex token and host")
-		return
-	}
-
-	url := fmt.Sprintf("%s/library/metadata/%v/children?X-Plex-Token=%s", host, ratingKey, token)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Failed to create request")
-		return
-	}
-
-	client := &http.Client{}
-
-	response, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Failed to send request")
-		return
-	}
-
-	defer response.Body.Close()
-
-	var data SeasonMetadata
-	err = xml.NewDecoder(response.Body).Decode(&data)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Failed to decode response")
-		return
-	}
-
-
-	for _, episode := range data.Video {
-		fmt.Printf("[%v] %s\n", episode.RatingKey, episode.Title)
-	}
 }

@@ -6,58 +6,29 @@ import (
 	"pod-link/modules/overseerr"
 	overseerr_movies "pod-link/modules/overseerr/movies"
 	overseerr_structs "pod-link/modules/overseerr/structs"
-	"pod-link/modules/plex"
+	overseerr_tv "pod-link/modules/overseerr/tv"
 	"pod-link/modules/webhook"
+	"sync"
 )
 
-func getDirectoryBySeason(directories ([]plex.TvDirectory), season int) (plex.TvDirectory, error) {
-	for _, directory := range directories {
-		if directory.Index == fmt.Sprintf("%v", season) {
-			return directory, nil
-		}
-	}
+func handleRequest(request overseerr_structs.MediaRequest, requestWg *sync.WaitGroup) {
+	fmt.Printf("Received request with ID %d\n", request.ID)
 
-	return plex.TvDirectory{}, fmt.Errorf("No directory found for season %v", season)
-}
-
-func missingTvContent(requestDetails overseerr_structs.MediaRequest) {
-	seasons := overseerr.FilterCompleteSeasons(requestDetails)
-
-	if len(seasons) == 0 {
-		fmt.Printf("[%v] No incomplete seasons\n", requestDetails.ID)
-		return
-	}
-
-	// if no rating key then content is not on plex so follow normal content add flow
-	if requestDetails.Media.RatingKey == "" {
-		fmt.Printf("[%v] No rating key\n", requestDetails.ID)
-		// todo
-		return
-	}
-
-	tvMetadata, err := plex.GetTvMetadata(requestDetails.Media.RatingKey)
+	requestDetails, err := overseerr.GetRequestDetails(request.ID)
 	if err != nil {
+		fmt.Println("Failed to get request details. Skipping")
 		fmt.Println(err)
 		return
 	}
 
-	for _, season := range seasons {
-		directory, err := getDirectoryBySeason(tvMetadata.Directory, season)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		fmt.Printf("[%v] %s\n", requestDetails.ID, directory.Title)
-
-		plex.GetSeasonMetadata(directory.RatingKey)
+	switch requestDetails.Media.MediaType {
+	case "movie":
+		overseerr_movies.Missing(requestDetails)
+	case "tv":
+		overseerr_tv.Missing(requestDetails)
 	}
 
-	// overseerr_tv.FindById(requestDetails.Media.TmdbID, seasons)
-}
-
-func missingMovieContent(requestDetails overseerr_structs.MediaRequest) {
-	overseerr_movies.FindById(requestDetails.Media.TmdbID)
+	requestWg.Done()
 }
 
 func missingContent() {
@@ -73,22 +44,13 @@ func missingContent() {
 	// 	return
 	// }
 
+	var requestWg sync.WaitGroup
 	for _, request := range requests.Results {
-		fmt.Println(request.ID)
-		requestDetails, err := overseerr.GetRequestDetails(request.ID)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		switch(requestDetails.Media.MediaType) {
-		case "movie":
-			missingMovieContent(requestDetails)
-		case "tv":
-			missingTvContent(requestDetails)
-		}
-
+		requestWg.Add(1)
+		handleRequest(request, &requestWg)
 	}
+
+	requestWg.Wait()
 }
 
 func main() {

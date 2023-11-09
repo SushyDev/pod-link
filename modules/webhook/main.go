@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 	"pod-link/modules/config"
-	overseerr "pod-link/modules/overseerr"
+	overseerr_movies "pod-link/modules/overseerr/movies"
 	overseerr_structs "pod-link/modules/overseerr/structs"
+	overseerr_tv "pod-link/modules/overseerr/tv"
 )
 
 type RequestData struct {
@@ -68,7 +69,12 @@ func handleNotification(notificationType string, body []byte) error {
 			return err
 		}
 
-		overseerr.HandleMediaAutoApprovedNotification(mediaAutoApprovedNotification)
+		switch mediaAutoApprovedNotification.Media.MediaType {
+		case "movie":
+			overseerr_movies.Request(mediaAutoApprovedNotification)
+		case "tv":
+			overseerr_tv.Request(mediaAutoApprovedNotification)
+		}
 	default:
 		fmt.Printf("Unknown notification type: %s\n", notificationType)
 	}

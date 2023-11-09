@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"pod-link/modules/config"
-	overseerr_movies "pod-link/modules/overseerr/movies"
 	overseerr_settings "pod-link/modules/overseerr/settings"
 	overseerr_structs "pod-link/modules/overseerr/structs"
-	overseerr_tv "pod-link/modules/overseerr/tv"
 	"time"
 )
 
@@ -45,15 +43,6 @@ func GetMediaRequest(requestId int) (overseerr_structs.MediaRequest, error) {
 	}
 
 	return data, nil
-}
-
-func HandleMediaAutoApprovedNotification(notification overseerr_structs.MediaAutoApprovedNotification) {
-	switch notification.Media.MediaType {
-	case "movie":
-		overseerr_movies.Request(notification)
-	case "tv":
-		overseerr_tv.Request(notification)
-	}
 }
 
 type RequestsReturned struct {
@@ -149,19 +138,6 @@ func GetRequestDetails(requestId int) (overseerr_structs.MediaRequest, error) {
 	}
 
 	return request, nil
-}
-
-func FilterCompleteSeasons(details overseerr_structs.MediaRequest) []int {
-	var seasons []int
-	for _, season := range details.Seasons {
-		for _, mediaInfoSeason := range details.Media.Seasons {
-			if season.SeasonNumber == mediaInfoSeason.SeasonNumber && mediaInfoSeason.Status != 5 {
-				seasons = append(seasons, mediaInfoSeason.SeasonNumber)
-			}
-		}
-	}
-
-	return seasons
 }
 
 func getServerConnection(connections []overseerr_structs.PlexConnection) (overseerr_structs.PlexConnection, error) {
