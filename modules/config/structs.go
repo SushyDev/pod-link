@@ -9,7 +9,8 @@ type Pod struct {
 }
 
 type RealDebrid struct {
-	Token string `yaml:"token"`
+	Token   string `yaml:"token"`
+	Timeout int    `yaml:"timeout"`
 }
 
 type Overseerr struct {

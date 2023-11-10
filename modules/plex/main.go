@@ -3,6 +3,7 @@ package plex
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"net/http"
 	"pod-link/modules/overseerr"
 )
@@ -77,6 +78,15 @@ func GetShowLeaves(ratingKey string) (ShowLeaves, error) {
 	err = xml.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
 		fmt.Println("Failed to decode response")
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Failed to read response body")
+			return ShowLeaves{}, err
+		}
+
+		fmt.Println(string(body))
+
 		return ShowLeaves{}, err
 	}
 

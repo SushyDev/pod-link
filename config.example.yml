@@ -5,6 +5,7 @@ settings:
 
   real_debrid:
     token:
+    timeout: 5
 
   overseerr:
     host:

@@ -28,6 +28,8 @@ func handleRequest(request overseerr_structs.MediaRequest, requestWg *sync.WaitG
 		overseerr_tv.Missing(requestDetails)
 	}
 
+	fmt.Printf("[%d] Done\n", request.ID)
+
 	requestWg.Done()
 }
 
@@ -44,13 +46,16 @@ func missingContent() {
 		return
 	}
 
+	// perhaps split the requests into chunks and run each chunk concurrently
 	var requestWg sync.WaitGroup
 	for _, request := range filteredRequests {
 		requestWg.Add(1)
-		handleRequest(request, &requestWg)
+		go handleRequest(request, &requestWg)
 	}
 
 	requestWg.Wait()
+
+	fmt.Println("Finished")
 }
 
 func main() {

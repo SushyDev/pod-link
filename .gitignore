@@ -1,1 +1,4 @@
+fly.toml
 config.yml
+config.*.yml
+!config.example.yml

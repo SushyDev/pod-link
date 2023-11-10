@@ -32,11 +32,12 @@ settings:
 ```
 
 ### Real Debrid
-fill in your [RD token](https://real-debrid.com/apitoken):
+fill in your [RD token](https://real-debrid.com/apitoken). Configure a timeout for adding magnets, defaults are suggested
 ```yml
 settings:
   real_debrid:
     token: "TOKEN"
+    timeout: 5
 ```
 
 ### Overseerr

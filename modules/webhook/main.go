@@ -23,6 +23,12 @@ func Listen() {
 		port = "8080"
 	}
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("pod-link up and running!"))
+		r.Body.Close()
+	})
+
 	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			fmt.Println("Only POST requests are allowed")

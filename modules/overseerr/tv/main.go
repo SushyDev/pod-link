@@ -11,9 +11,15 @@ import (
 	"pod-link/modules/torrentio"
 	torrentio_tv "pod-link/modules/torrentio/tv"
 	"sync"
+	"time"
 )
 
-func findByEpisode(details overseerr_structs.TvDetails, season int, episode int, episodeWg *sync.WaitGroup) {
+type collectedStream struct {
+	Stream torrentio.Stream
+	Properties torrentio.Properties
+}
+
+func findByEpisode(details overseerr_structs.TvDetails, season int, episode int, collectedStreams *[]collectedStream, episodeWg *sync.WaitGroup) {
 	tvId := details.MediaInfo.TmdbID
 
 	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
@@ -45,20 +51,15 @@ func findByEpisode(details overseerr_structs.TvDetails, season int, episode int,
 			continue
 		}
 
-		fmt.Printf("[%v - S%vE%v - %s] + %v\n", tvId, season, episode, stream.Version, properties.Title)
+		fmt.Printf("[%v - S%vE%v - %s] Found %v\n", tvId, season, episode, stream.Version, properties.Title)
 
-		err = debrid.AddMagnet(properties.Link, properties.Files)
-		if err != nil {
-			fmt.Printf("[%v - S%vE%v - %s] Failed to add magnet\n", tvId, season, episode, stream.Version)
-			fmt.Println(err)
-			continue
-		}
+		*collectedStreams = append(*collectedStreams, collectedStream{ Stream: stream, Properties: properties })
 	}
 
 	episodeWg.Done()
 }
 
-func findBySeason(details overseerr_structs.TvDetails, season int, seasonWg *sync.WaitGroup) {
+func findBySeason(details overseerr_structs.TvDetails, season int, collectedStreams *[]collectedStream, seasonWg *sync.WaitGroup) {
 	tvId := details.MediaInfo.TmdbID
 
 	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
@@ -101,7 +102,7 @@ func findBySeason(details overseerr_structs.TvDetails, season int, seasonWg *syn
 		var episodesWg sync.WaitGroup
 		for _, episode := range episodes {
 			episodesWg.Add(1)
-			go findByEpisode(details, season, episode, &episodesWg)
+			go findByEpisode(details, season, episode, collectedStreams, &episodesWg)
 		}
 
 		episodesWg.Wait()
@@ -118,27 +119,26 @@ func findBySeason(details overseerr_structs.TvDetails, season int, seasonWg *syn
 				continue
 			}
 
-			fmt.Printf("[%v - S%v - %s] + %v\n", tvId, season, stream.Version, properties.Title)
+			fmt.Printf("[%v - S%v - %s] Found %v\n", tvId, season, stream.Version, properties.Title)
 
-			err = debrid.AddMagnet(properties.Link, properties.Files)
-			if err != nil {
-				fmt.Printf("[%v S%v - %s] Failed to add magnet\n", tvId, season, stream.Version)
-				fmt.Println(err)
-				continue
-			}
+			*collectedStreams = append(*collectedStreams, collectedStream{ Stream: stream, Properties: properties })
 		}
 	}
 
 	seasonWg.Done()
 }
 
-func findBySeasonPlex(details overseerr_structs.TvDetails, season int, seasonWg *sync.WaitGroup) {
+func findBySeasonPlex(details overseerr_structs.TvDetails, season int, collectedStreams *[]collectedStream, seasonWg *sync.WaitGroup) {
 	tvId := details.MediaInfo.TmdbID
 
 	showLeaves, err := plex.GetShowLeaves(details.MediaInfo.RatingKey)
 	if err != nil {
 		fmt.Printf("[%v - S%v] Failed to get show leaves\n", tvId, season)
 		fmt.Println(err)
+
+		seasonWg.Add(1)
+		findBySeason(details, season, collectedStreams, seasonWg)
+
 		seasonWg.Done()
 		return
 	}
@@ -176,14 +176,14 @@ func findBySeasonPlex(details overseerr_structs.TvDetails, season int, seasonWg 
 			fmt.Printf("[%v - S%v] Season is fully released, searching for complete season\n", tvId, season)
 
 			seasonWg.Add(1)
-			go findBySeason(details, season, seasonWg)
+			go findBySeason(details, season, collectedStreams, seasonWg)
 		} else {
 			fmt.Printf("[%v - S%v] Season is not fully released, searching for episodes\n", tvId, season)
 
 			var episodesWg sync.WaitGroup
 			for _, episode := range releasedEpisodes {
 				episodesWg.Add(1)
-				go findByEpisode(details, season, episode, &episodesWg)
+				go findByEpisode(details, season, episode, collectedStreams, &episodesWg)
 			}
 
 			episodesWg.Wait()
@@ -200,7 +200,7 @@ func findBySeasonPlex(details overseerr_structs.TvDetails, season int, seasonWg 
 			}
 
 			episodesWg.Add(1)
-			go findByEpisode(details, season, episode, &episodesWg)
+			go findByEpisode(details, season, episode, collectedStreams, &episodesWg)
 		}
 
 		episodesWg.Wait()
@@ -227,26 +227,50 @@ func findById(tvId int, seasons []int) {
 	fmt.Printf("[%v] %s\n", tvId, details.OriginalName)
 
 	var seasonWg sync.WaitGroup
+	var streams []collectedStream
 
 	if details.MediaInfo.RatingKey != "" {
 		fmt.Printf("[%v] Content of this show is on plex so we should only download missing seasons or episodes\n", tvId)
 
 		for _, season := range seasons {
 			seasonWg.Add(1)
-			go findBySeasonPlex(details, season, &seasonWg)
+			go findBySeasonPlex(details, season, &streams, &seasonWg)
 		}
 	} else {
 		fmt.Printf("[%v] No content of this show is on plex so we should download all requested seasons\n", tvId)
 
 		for _, season := range seasons {
 			seasonWg.Add(1)
-			go findBySeason(details, season, &seasonWg)
+			go findBySeason(details, season, &streams, &seasonWg)
 		}
 	}
 
 	seasonWg.Wait()
 
-	fmt.Printf("[%v] Finished\n", tvId)
+	if len(streams) == 0 {
+		fmt.Printf("[%v] No results found\n", tvId)
+		return
+	}
+
+	fmt.Printf("[%v] Adding magnets\n", tvId)
+
+	config := config.GetConfig()
+
+	for _, collected := range streams {
+		time.Sleep(time.Duration(config.Settings.RealDebrid.Timeout) * time.Second)
+
+		properties := collected.Properties
+		stream := collected.Stream
+
+		err = debrid.AddMagnet(properties.Link, properties.Files)
+		if err != nil {
+			fmt.Printf("[%v - %s] Failed to add magnet. Skipping\n", tvId, stream.Version)
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Printf("[%v - %s] + %s\n", tvId, stream.Version, properties.Title)
+	}
 }
 
 func getTvDetails(tvId int) (overseerr_structs.TvDetails, error) {

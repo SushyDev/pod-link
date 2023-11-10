@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"pod-link/modules/config"
@@ -43,6 +44,15 @@ func AddMagnet(magnet string, files string) error {
 	err = json.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
 		fmt.Println("Failed to decode response")
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Failed to read response body")
+			return err
+		}
+
+		fmt.Println(body)
+
 		return err
 	}
 

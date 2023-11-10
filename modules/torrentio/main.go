@@ -73,16 +73,17 @@ func getEmojiValues(input string) ([]string, error) {
 }
 
 func getMagnet(input string) (string, string) {
+	input = strings.ReplaceAll(input, "https://torrentio.strem.fun/realdebrid/", "")
 	split := strings.Split(input, "/")
-	hash := split[5]
-	so := split[6]
-	dn := split[8]
 
-	if so == "null" {
+	hash := split[1]
+	so := split[3]
+
+	if so == "undefined" || so == "null" || so == "0" {
 		so = "all"
 	}
 
-	return "magnet:?xt=urn:btih:" + hash + "&dn=" + dn, so
+	return "magnet:?xt=urn:btih:" + hash, so
 }
 
 func GetPropertiesFromStream(stream Stream) (Properties, error) {
