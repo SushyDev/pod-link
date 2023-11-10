@@ -1,6 +1,7 @@
 package overseerr
 
 import (
+	"fmt"
 	overseerr_settings "pod-link/modules/overseerr/settings"
 	overseerr_structs "pod-link/modules/overseerr/structs"
 )
@@ -40,6 +41,10 @@ func GetPlexTokenAndHost() (string, string, error) {
 			connection, err := getServerConnection(server.Connection)
 			if err != nil {
 				return "", "", err
+			}
+
+			if connection.Uri == "" {
+				return "", "", fmt.Errorf("No working connection found")
 			}
 
 			plexToken = server.AccessToken

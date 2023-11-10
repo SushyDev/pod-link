@@ -76,11 +76,12 @@ Defaults supplied in the example should suffice for most usecases
 ```yml
 shows:
   seasons:
-    - "(?i)[. ]s\\d+[. ]"
-    - "(?i)[. ]season \\d+[. ]"
+    - "(?i)[. -]s\\d+[. -]"
+    - "(?i)[. -]season[. -]\\d+[. -]"
   episodes:
-    - "(?i)[. ]e\\d+[. ]"
-    - "(?i)[. ]episode \\d+[. ]"
+    - "(?i)[. -]e\\d+[. -]"
+    - "(?i)[. -]episode[. -]\\d+[. -]"
+    - "(?i)[. ]s\\d+e\\d+[. ]"
 ```
 
 ### Movies

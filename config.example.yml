@@ -22,11 +22,12 @@ settings:
 
 shows:
   seasons:
-    - "(?i)[. ]s\\d+[. ]"
-    - "(?i)[. ]season \\d+[. ]"
+    - "(?i)[. -]s\\d+[. -]"
+    - "(?i)[. -]season[. -]\\d+[. -]"
   episodes:
-    - "(?i)[. ]e\\d+[. ]"
-    - "(?i)[. ]episode \\d+[. ]"
+    - "(?i)[. -]e\\d+[. -]"
+    - "(?i)[. -]episode[. -]\\d+[. -]"
+    - "(?i)[. ]s\\d+e\\d+[. ]"
 
 movies:
   max_files: 45

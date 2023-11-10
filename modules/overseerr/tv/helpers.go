@@ -12,10 +12,12 @@ func filterCompleteSeasons(details overseerr_structs.MediaRequest) []int {
 	var seasons []int
 	for _, season := range details.Seasons {
 		for _, mediaInfoSeason := range details.Media.Seasons {
-			if season.SeasonNumber == mediaInfoSeason.SeasonNumber && mediaInfoSeason.Status != 5 {
-				seasons = append(seasons, mediaInfoSeason.SeasonNumber)
+			if season.SeasonNumber == mediaInfoSeason.SeasonNumber && mediaInfoSeason.Status == 5 {
+				continue
 			}
 		}
+
+		seasons = append(seasons, season.SeasonNumber)
 	}
 
 	return seasons

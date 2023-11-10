@@ -5,9 +5,17 @@ import (
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
+	"reflect"
 )
 
+var config Config
+
 func GetConfig() Config {
+	if !reflect.DeepEqual(config, Config{}) {
+		fmt.Println("Returning cached config")
+		return config
+	}
+
 	configFile, err := os.Open("config.yml")
 	if err != nil {
 		fmt.Printf("Error opening config file: %v\n", err)

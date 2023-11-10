@@ -40,41 +40,53 @@ func GetList(ImdbId string, Season int, Episode int) ([]torrentio.Stream, error)
 	return data.Streams, nil
 }
 
-func FilterSeasons(streams []torrentio.Stream) ([]torrentio.Stream, error) {
-	var results []torrentio.Stream
+func isSeasonOrEpisodeMatch(stream torrentio.Stream) (bool, bool, error) {
+	var isSeasonMatch bool
+	var isEpisodeMatch bool
 
 	config := config.GetConfig()
 
-	for i, stream := range streams {
-		var isSeasonMatch bool
-		var isEpisodeMatch bool
+	streamTitle := strings.Split(stream.Title, "\n")[0]
 
-		for _, season := range config.Shows.Seasons {
-			regex, err := regexp.Compile(season)
-			if err != nil {
-				fmt.Println("Error compiling regular expression")
-				return nil, err
-			}
-
-			isSeasonMatch = regex.MatchString(stream.Title)
-
-			if isSeasonMatch {
-				break
-			}
+	for _, season := range config.Shows.Seasons {
+		regex, err := regexp.Compile(season)
+		if err != nil {
+			fmt.Println("Error compiling regular expression")
+			return false, false, err
 		}
 
-		for _, episode := range config.Shows.Episodes {
-			regex, err := regexp.Compile(episode)
-			if err != nil {
-				fmt.Println("Error compiling regular expression")
-				return nil, err
-			}
+		isSeasonMatch = regex.MatchString(streamTitle)
 
-			isEpisodeMatch = regex.MatchString(stream.Title)
+		if isSeasonMatch {
+			break
+		}
+	}
 
-			if isEpisodeMatch {
-				break
-			}
+	for _, episode := range config.Shows.Episodes {
+		regex, err := regexp.Compile(episode)
+		if err != nil {
+			fmt.Println("Error compiling regular expression")
+			return false, false, err
+		}
+
+		isEpisodeMatch = regex.MatchString(streamTitle)
+
+		if isEpisodeMatch {
+			break
+		}
+	}
+
+	return isSeasonMatch, isEpisodeMatch, nil
+}
+
+
+func FilterSeasons(streams []torrentio.Stream) ([]torrentio.Stream, error) {
+	var results []torrentio.Stream
+
+	for i, stream := range streams {
+		isSeasonMatch, isEpisodeMatch, err := isSeasonOrEpisodeMatch(stream)
+		if err != nil {
+			return nil, err
 		}
 
 		if isSeasonMatch && !isEpisodeMatch {
@@ -88,15 +100,13 @@ func FilterSeasons(streams []torrentio.Stream) ([]torrentio.Stream, error) {
 func FilterEpisodes(streams []torrentio.Stream) []torrentio.Stream {
 	var results []torrentio.Stream
 
-	settings := config.GetSettings()
-	token := settings.RealDebrid.Token
-
 	for i, stream := range streams {
-		url := strings.ReplaceAll(stream.Url, "https://torrentio.strem.fun/realdebrid/", "")
-		url = strings.ReplaceAll(url, token, "")
+		_, isEpisodeMatch, err := isSeasonOrEpisodeMatch(stream)
+		if err != nil {
+			return nil
+		}
 
-		split := strings.Split(url, "/")
-		if (split[2] == "1" || split[2] == "null") {
+		if isEpisodeMatch {
 			results = append(results, streams[i])
 		}
 	}
