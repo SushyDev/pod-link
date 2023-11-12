@@ -12,7 +12,6 @@ var config Config
 
 func GetConfig() Config {
 	if !reflect.DeepEqual(config, Config{}) {
-		fmt.Println("Returning cached config")
 		return config
 	}
 
@@ -28,7 +27,6 @@ func GetConfig() Config {
 		panic(err)
 	}
 
-	var config Config
 	err = yaml.Unmarshal(configFileBytes, &config)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config file: %v\n", err)

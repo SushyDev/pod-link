@@ -252,10 +252,10 @@ func findById(tvId int, seasons []int) {
 
 	fmt.Printf("[%v] Adding magnets\n", tvId)
 
-	config := config.GetConfig()
+	settings := config.GetSettings()
 
 	for _, collected := range streams {
-		time.Sleep(time.Duration(config.Settings.RealDebrid.Timeout) * time.Second)
+		time.Sleep(time.Duration(settings.RealDebrid.Timeout) * time.Second)
 
 		properties := collected.Properties
 		stream := collected.Stream
