@@ -34,7 +34,7 @@ func findByEpisode(details overseerr_structs.TvDetails, season int, episode int,
 	streams = torrentio.FilterVersions(streams, "shows")
 
 	if len(streams) == 0 {
-		fmt.Printf("[%v - S%vE%v] No complete episodes found\n", tvId, season, episode)
+		fmt.Printf("[%v - S%vE%v] No episodes found\n", tvId, season, episode)
 		episodeWg.Done()
 		return
 	}
@@ -170,7 +170,7 @@ func findBySeasonPlex(details overseerr_structs.TvDetails, season int, collected
 	}
 
 	if len(storedEpisodes) == 0 {
-		fmt.Printf("[%v - S%v] Season has %v released episodes\n", tvId, season, len(releasedEpisodes))
+		fmt.Printf("[%v - S%v] Season has no episodes on plex\n", tvId, season)
 
 		if len(releasedEpisodes) == len(seasonEpisodes) {
 			fmt.Printf("[%v - S%v] Season is fully released, searching for complete season\n", tvId, season)
@@ -189,14 +189,12 @@ func findBySeasonPlex(details overseerr_structs.TvDetails, season int, collected
 			episodesWg.Wait()
 		}
 	} else {
-		fmt.Printf("[%v - S%v] Episodes for season found on plex, searching for episodes\n", tvId, season)
+		fmt.Printf("[%v - S%v] Season has episodes on plex, searching for missing episodes\n", tvId, season)
 
 		var episodesWg sync.WaitGroup
 		for _, episode := range releasedEpisodes {
-			for _, storedEpisode := range storedEpisodes {
-				if storedEpisode.Index == fmt.Sprintf("%v", episode) {
-					continue
-				}
+			if episodeIsStored(episode, storedEpisodes) {
+				continue
 			}
 
 			episodesWg.Add(1)

@@ -3,10 +3,21 @@ package overseerr_tv
 import (
 	"fmt"
 	overseerr_structs "pod-link/modules/overseerr/structs"
+	"pod-link/modules/plex"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func episodeIsStored(episode int, storedEpisodes ([]plex.Video)) bool {
+	for _, storedEpisode := range storedEpisodes {
+		if storedEpisode.Index == fmt.Sprintf("%d", episode) {
+			return true
+		}
+	}
+
+	return false
+}
 
 func filterCompleteSeasons(details overseerr_structs.MediaRequest) []int {
 	var seasons []int

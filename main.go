@@ -8,10 +8,9 @@ import (
 	overseerr_structs "pod-link/modules/overseerr/structs"
 	overseerr_tv "pod-link/modules/overseerr/tv"
 	"pod-link/modules/webhook"
-	"sync"
 )
 
-func handleRequest(request overseerr_structs.MediaRequest, requestWg *sync.WaitGroup) {
+func handleRequest(request overseerr_structs.MediaRequest) {
 	fmt.Printf("Received request with ID %d\n", request.ID)
 
 	requestDetails, err := overseerr_requests.GetRequestDetails(request.ID)
@@ -29,8 +28,6 @@ func handleRequest(request overseerr_structs.MediaRequest, requestWg *sync.WaitG
 	}
 
 	fmt.Printf("[%d] Done\n", request.ID)
-
-	requestWg.Done()
 }
 
 func missingContent() {
@@ -47,13 +44,9 @@ func missingContent() {
 	}
 
 	// perhaps split the requests into chunks and run each chunk concurrently
-	var requestWg sync.WaitGroup
 	for _, request := range filteredRequests {
-		requestWg.Add(1)
-		go handleRequest(request, &requestWg)
+		handleRequest(request)
 	}
-
-	requestWg.Wait()
 
 	fmt.Println("Finished")
 }

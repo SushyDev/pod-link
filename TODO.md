@@ -1,4 +1,2 @@
 - File limit (per version?)
-- Cron for new episodes and missing content
-- Check in the findbyseason function to see if the full season is even out yet
 - Move to overseerr plex refresh library stuff
