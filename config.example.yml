@@ -11,10 +11,6 @@ settings:
     host:
     token:
 
-  plex:
-    tv_id:
-    movie_id:
-
   torrentio:
     shows:
       filter_uri: "providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex|sort=qualitysize|qualityfilter=other,scr,cam,unknown,480p,720p|sizefilter=50GB"

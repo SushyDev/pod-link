@@ -18,13 +18,6 @@ type Overseerr struct {
 	Token string `yaml:"token"`
 }
 
-type Plex struct {
-	Host    string `yaml:"host"`
-	Token   string `yaml:"token"`
-	TvId    string `yaml:"tv_id"`
-	MovieId string `yaml:"movie_id"`
-}
-
 type Torrentio struct {
 	Shows struct {
 		FilterURI string `yaml:"filter_uri"`
@@ -38,7 +31,6 @@ type Settings struct {
 	Pod        Pod        `yaml:"pod"`
 	RealDebrid RealDebrid `yaml:"real_debrid"`
 	Overseerr  Overseerr  `yaml:"overseerr"`
-	Plex       Plex       `yaml:"plex"`
 	Torrentio  Torrentio  `yaml:"torrentio"`
 }
 

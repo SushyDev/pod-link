@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"pod-link/modules/config"
 	overseerr_movies "pod-link/modules/overseerr/movies"
+	overseerr_settings "pod-link/modules/overseerr/settings"
 	overseerr_structs "pod-link/modules/overseerr/structs"
 	overseerr_tv "pod-link/modules/overseerr/tv"
+	"pod-link/modules/plex"
 )
 
 type RequestData struct {
@@ -69,17 +71,22 @@ func Listen() {
 func handleNotification(notificationType string, body []byte) error {
 	switch notificationType {
 	case "MEDIA_AUTO_APPROVED":
-		var mediaAutoApprovedNotification overseerr_structs.MediaAutoApprovedNotification
-		err := json.Unmarshal(body, &mediaAutoApprovedNotification)
+		var notification overseerr_structs.MediaAutoApprovedNotification
+		err := json.Unmarshal(body, &notification)
 		if err != nil {
 			return err
 		}
 
-		switch mediaAutoApprovedNotification.Media.MediaType {
+		switch notification.Media.MediaType {
 		case "movie":
-			overseerr_movies.Request(mediaAutoApprovedNotification)
+			overseerr_movies.Request(notification)
 		case "tv":
-			overseerr_tv.Request(mediaAutoApprovedNotification)
+			overseerr_tv.Request(notification)
+		}
+
+		libraryIds := overseerr_settings.GetLibraryIdsByType(notification.Media.MediaType)
+		for _, libraryId := range libraryIds {
+			plex.RefreshLibrary(libraryId)
 		}
 	default:
 		fmt.Printf("Unknown notification type: %s\n", notificationType)

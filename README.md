@@ -49,15 +49,6 @@ settings:
     token: "TOKEN:"
 ```
 
-### Plex
-Get your plex library id's [here](https://plex.tv/devices.xml)
-```yml
-settings:
-  plex:
-    tv_id: 1
-    movie_id: 2
-```
-
 ### Torrentio
 Get the torrentio filter options from [here](https://torrentio.strem.fun/configure)
 Make sure to only put the filter options and not the entire url.
