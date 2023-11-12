@@ -20,7 +20,7 @@ docker run --name pod-link --network host pod-link
 
 ## Configuration
 ### pod-link
-configure the port that `pod-link` lives on and configure a header authorization code that must match the one in overseerr's webhook settings. Configure the minimum request age for missing content scanning, defauls are suggested
+configure the port that `pod-link` lives on and configure a header authorization code that must match the one in overseerr's webhook settings. Configure the minimum request age (in hours) for missing content scanning, defauls are suggested
 
 ```yml
 settings:
@@ -32,7 +32,7 @@ settings:
 ```
 
 ### Real Debrid
-fill in your [RD token](https://real-debrid.com/apitoken). Configure a timeout for adding magnets, defaults are suggested
+fill in your [RD token](https://real-debrid.com/apitoken). Configure a timeout (in seconds) for adding magnets, defaults are suggested
 ```yml
 settings:
   real_debrid:

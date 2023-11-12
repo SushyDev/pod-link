@@ -38,7 +38,7 @@ func RefreshLibrary(id string) error {
 	return nil
 }
 
-func GetEpisodesBySeason(video ([]Video), season int) []Video {
+func GetEpisodesBySeason(video []Video, season int) []Video {
 	var episodes []Video
 	for _, episode := range video {
 		if episode.ParentIndex == fmt.Sprintf("%v", season) {
@@ -74,11 +74,19 @@ func GetShowLeaves(ratingKey string) (ShowLeaves, error) {
 
 	defer response.Body.Close()
 
-	var data ShowLeaves
-	err = xml.NewDecoder(response.Body).Decode(&data)
-	if err != nil {
-		fmt.Println("Failed to decode response")
+	switch response.StatusCode {
+	case 200:
+		var data ShowLeaves
+		err = xml.NewDecoder(response.Body).Decode(&data)
+		if err != nil {
+			fmt.Println("Failed to decode response")
+			return ShowLeaves{}, err
+		}
 
+		return data, nil
+	case 404:
+		return ShowLeaves{}, fmt.Errorf("[%v] Could not find show on Plex", response.StatusCode)
+	default:
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			fmt.Println("Failed to read response body")
@@ -87,8 +95,6 @@ func GetShowLeaves(ratingKey string) (ShowLeaves, error) {
 
 		fmt.Println(string(body))
 
-		return ShowLeaves{}, err
+		return ShowLeaves{}, fmt.Errorf("[%v] Unknown error", response.StatusCode)
 	}
-
-	return data, nil
 }

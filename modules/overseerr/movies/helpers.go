@@ -15,11 +15,16 @@ func FindById(movieId int) {
 		return
 	}
 
-	fmt.Printf("[%v] %s\n", details.ImdbID, details.Title)
+	if details.ImdbID == "" {
+		fmt.Printf("[%v] No IMDB ID found\n", movieId)
+		return
+	}
 
-	streams, err := torrentio_movies.GetList(details.ImdbID)
+	fmt.Printf("[%v] %s\n", movieId, details.Title)
+
+	streams, err := torrentio_movies.GetStreams(details.ImdbID)
 	if err != nil {
-		fmt.Println("Failed to get results")
+		fmt.Printf("[%v] Failed to get streams\n", movieId)
 		fmt.Println(err)
 		return
 	}
@@ -27,14 +32,14 @@ func FindById(movieId int) {
 	streams = torrentio.FilterVersions(streams, "movies")
 
 	if len(streams) == 0 {
-		fmt.Println("No results found")
+		fmt.Printf("[%v] No matching streams found\n", movieId)
 		return
 	}
 
 	for _, stream := range streams {
 		properties, err := torrentio.GetPropertiesFromStream(stream)
 		if err != nil {
-			fmt.Println("Failed to get properties. Skipping")
+			fmt.Printf("[%v] Failed to get properties\n", movieId)
 			fmt.Println(err)
 			continue
 		}
@@ -43,13 +48,13 @@ func FindById(movieId int) {
 			continue
 		}
 
-		fmt.Printf("[%s] %s\n", stream.Version, properties.Title)
-
 		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Println("Failed to add magnet. Skipping")
+			fmt.Printf("[%v] Failed to add magnet\n", movieId)
 			fmt.Println(err)
 			continue
 		}
+
+		fmt.Printf("[%s] + %s\n", stream.Version, properties.Title)
 	}
 }

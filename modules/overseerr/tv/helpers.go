@@ -55,7 +55,7 @@ func getRequestedSeasons(extra []overseerr_structs.Extra) []int {
 		for _, season := range list {
 			seasonNumber, err := strconv.Atoi(season)
 			if err != nil {
-				fmt.Println("Failed to convert season to int. Skipping")
+				fmt.Println("Failed to convert season to int")
 				fmt.Println(err)
 				continue
 			}

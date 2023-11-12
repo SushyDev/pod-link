@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func GetList(ImdbId string, Season int, Episode int) ([]torrentio.Stream, error) {
+func GetStreams(ImdbId string, Season int, Episode int) ([]torrentio.Stream, error) {
 	baseURL := torrentio.GetBaseURL("shows")
 	url := fmt.Sprintf("%s/stream/series/%s:%v:%v.json", baseURL, ImdbId, Season, Episode)
 

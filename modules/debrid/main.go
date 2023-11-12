@@ -40,24 +40,15 @@ func AddMagnet(magnet string, files string) error {
 
 	defer response.Body.Close()
 
-	var data AddMagnetResponse
-	err = json.NewDecoder(response.Body).Decode(&data)
-	if err != nil {
-		fmt.Println("Failed to decode response")
-
-		body, err := io.ReadAll(response.Body)
+	switch response.StatusCode {
+	case 201:
+		var data AddMagnetResponse
+		err = json.NewDecoder(response.Body).Decode(&data)
 		if err != nil {
-			fmt.Println("Failed to read response body")
+			fmt.Println("Failed to decode response")
 			return err
 		}
 
-		fmt.Println(body)
-
-		return err
-	}
-
-	switch response.StatusCode {
-	case 201:
 		return selectFiles(data.Id, files)
 	case 400:
 		return fmt.Errorf("Bad Request (see error message)")
@@ -67,8 +58,18 @@ func AddMagnet(magnet string, files string) error {
 		return fmt.Errorf("Permission denied (account locked, not premium) or Infringing torrent")
 	case 503:
 		return fmt.Errorf("Service unavailable (see error message)")
+	case 504:
+		return fmt.Errorf("Service timeout (see error message)")
 	default:
-		return fmt.Errorf("Unknown error")
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Failed to read response body")
+			return err
+		}
+
+		fmt.Println(string(body))
+
+		return fmt.Errorf("[%v] Unknown error", response.StatusCode)
 	}
 }
 

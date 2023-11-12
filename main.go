@@ -15,7 +15,7 @@ func handleRequest(request overseerr_structs.MediaRequest) {
 
 	requestDetails, err := overseerr_requests.GetRequestDetails(request.ID)
 	if err != nil {
-		fmt.Println("Failed to get request details. Skipping")
+		fmt.Println("Failed to get request details")
 		fmt.Println(err)
 		return
 	}

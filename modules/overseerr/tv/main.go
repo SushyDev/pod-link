@@ -22,9 +22,9 @@ type collectedStream struct {
 func findByEpisode(details overseerr_structs.TvDetails, season int, episode int, collectedStreams *[]collectedStream, episodeWg *sync.WaitGroup) {
 	tvId := details.MediaInfo.TmdbID
 
-	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, episode)
+	streams, err := torrentio_tv.GetStreams(details.ExternalIds.ImdbID, season, episode)
 	if err != nil {
-		fmt.Printf("[%v - S%vE%v] Failed to get results\n", tvId, season, episode)
+		fmt.Printf("[%v - S%vE%v] Failed to get streams\n", tvId, season, episode)
 		fmt.Println(err)
 		episodeWg.Done()
 		return
@@ -62,7 +62,7 @@ func findByEpisode(details overseerr_structs.TvDetails, season int, episode int,
 func findBySeason(details overseerr_structs.TvDetails, season int, collectedStreams *[]collectedStream, seasonWg *sync.WaitGroup) {
 	tvId := details.MediaInfo.TmdbID
 
-	streams, err := torrentio_tv.GetList(details.ExternalIds.ImdbID, season, 1)
+	streams, err := torrentio_tv.GetStreams(details.ExternalIds.ImdbID, season, 1)
 	if err != nil {
 		fmt.Printf("[%v - S%v] Failed to get results\n", tvId, season)
 		fmt.Println(err)
@@ -222,7 +222,12 @@ func findById(tvId int, seasons []int) {
 		return
 	}
 
-	fmt.Printf("[%v] %s\n", tvId, details.OriginalName)
+	if details.MediaInfo.TmdbID == 0 {
+		fmt.Println("No TMDB ID found")
+		return
+	}
+
+	fmt.Printf("[%v] %s\n", tvId, details.Name)
 
 	var seasonWg sync.WaitGroup
 	var streams []collectedStream
@@ -246,7 +251,7 @@ func findById(tvId int, seasons []int) {
 	seasonWg.Wait()
 
 	if len(streams) == 0 {
-		fmt.Printf("[%v] No results found\n", tvId)
+		fmt.Printf("[%v] No matching streams found\n", tvId)
 		return
 	}
 
@@ -262,7 +267,7 @@ func findById(tvId int, seasons []int) {
 
 		err = debrid.AddMagnet(properties.Link, properties.Files)
 		if err != nil {
-			fmt.Printf("[%v - %s] Failed to add magnet. Skipping\n", tvId, stream.Version)
+			fmt.Printf("[%v - %s] Failed to add magnet\n", tvId, stream.Version)
 			fmt.Println(err)
 			continue
 		}

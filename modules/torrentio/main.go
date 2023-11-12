@@ -162,7 +162,6 @@ func FilterVersions(streams []Stream, mediaType string) []Stream {
 		}
 
 		if result == (Stream{}) {
-			fmt.Printf("[%s] No match found\n", version.Name)
 			continue
 		}
 
