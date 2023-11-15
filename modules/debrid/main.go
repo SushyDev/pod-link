@@ -16,6 +16,14 @@ type AddMagnetResponse struct {
 }
 
 func AddMagnet(magnet string, files string) error {
+	config := config.GetConfig()
+
+	if (config.Settings.Pod.Debug) {
+		fmt.Printf("[DEBUG] %s\n", magnet)
+		fmt.Println("[DEBUG] Skipping addMagnet")
+		return nil
+	}
+
 	input := url.Values{}
 	input.Set("magnet", magnet)
 
@@ -26,8 +34,7 @@ func AddMagnet(magnet string, files string) error {
 		return err
 	}
 
-	settings := config.GetSettings()
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", settings.RealDebrid.Token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.Settings.RealDebrid.Token))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}
@@ -80,8 +87,8 @@ func deleteFile(id string) error {
 		return err
 	}
 
-	settings := config.GetSettings()
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", settings.RealDebrid.Token))
+	config := config.GetConfig()
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.Settings.RealDebrid.Token))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}
@@ -119,8 +126,8 @@ func selectFiles(id string, files string) error {
 		return err
 	}
 
-	settings := config.GetSettings()
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", settings.RealDebrid.Token))
+	config := config.GetConfig()
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.Settings.RealDebrid.Token))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}

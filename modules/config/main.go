@@ -36,10 +36,6 @@ func GetConfig() Config {
 	return config
 }
 
-func GetSettings() Settings {
-	return GetConfig().Settings
-}
-
 func GetVersions(mediaType string) []Version {
 	config := GetConfig()
 

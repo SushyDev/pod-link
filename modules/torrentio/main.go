@@ -32,19 +32,19 @@ type Properties struct {
 }
 
 func GetBaseURL(mediaType string) string {
-	settings := config.GetSettings()
+	config := config.GetConfig()
 
 	var filter string
 	switch mediaType {
 	case "shows":
-		filter = settings.Torrentio.Shows.FilterURI
+		filter = config.Settings.Torrentio.Shows.FilterURI
 	case "movies":
-		filter = settings.Torrentio.Movies.FilterURI
+		filter = config.Settings.Torrentio.Movies.FilterURI
 	default:
 		filter = ""
 	}
 
-	token := settings.RealDebrid.Token
+	token := config.Settings.RealDebrid.Token
 	url := fmt.Sprintf("https://torrentio.strem.fun/%s|realdebrid=%s", filter, token)
 
 	return url

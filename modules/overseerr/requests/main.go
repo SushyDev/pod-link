@@ -10,11 +10,15 @@ import (
 )
 
 func GetMediaRequest(requestId int) (overseerr_structs.MediaRequest, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/request/%v", host, requestId)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -45,11 +49,15 @@ func GetMediaRequest(requestId int) (overseerr_structs.MediaRequest, error) {
 }
 
 func GetPendingRequests() (RequestsReturned, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/request?filter=processing&sort=added", host)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -80,7 +88,7 @@ func GetPendingRequests() (RequestsReturned, error) {
 }
 
 func FilterRequests(requests []overseerr_structs.MediaRequest) ([]overseerr_structs.MediaRequest, error) {
-	settings := config.GetSettings()
+	config := config.GetConfig()
 
 	var filteredRequests []overseerr_structs.MediaRequest
 	for _, request := range requests {
@@ -93,11 +101,11 @@ func FilterRequests(requests []overseerr_structs.MediaRequest) ([]overseerr_stru
 		currentDate := time.Now()
 		difference := currentDate.Sub(date)
 
-		if settings.Pod.MissingContent.RequestAge == 0 {
+		if config.Settings.Pod.MissingContent.RequestAge == 0 {
 			fmt.Println("Warning: Request age is set to 0, this will return all requests")
 		}
 
-		if difference.Hours() < settings.Pod.MissingContent.RequestAge {
+		if difference.Hours() < config.Settings.Pod.MissingContent.RequestAge {
 			continue
 		}
 
@@ -108,11 +116,15 @@ func FilterRequests(requests []overseerr_structs.MediaRequest) ([]overseerr_stru
 }
 
 func GetRequestDetails(requestId int) (overseerr_structs.MediaRequest, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/request/%v", host, requestId)
+		
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

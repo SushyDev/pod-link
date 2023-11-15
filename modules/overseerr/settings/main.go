@@ -9,11 +9,15 @@ import (
 )
 
 func GetPlexSettings() (overseerr_structs.PlexSettings, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/settings/plex", host)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -44,11 +48,15 @@ func GetPlexSettings() (overseerr_structs.PlexSettings, error) {
 }
 
 func GetPlexServers() (([]overseerr_structs.PlexDevice), error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/settings/plex/devices/servers", host)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

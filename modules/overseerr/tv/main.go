@@ -257,11 +257,9 @@ func findById(tvId int, seasons []int) {
 
 	fmt.Printf("[%v] Adding magnets\n", tvId)
 
-	settings := config.GetSettings()
+	config := config.GetConfig()
 
 	for _, collected := range streams {
-		time.Sleep(time.Duration(settings.RealDebrid.Timeout) * time.Second)
-
 		properties := collected.Properties
 		stream := collected.Stream
 
@@ -273,14 +271,22 @@ func findById(tvId int, seasons []int) {
 		}
 
 		fmt.Printf("[%v - %s] + %s\n", tvId, stream.Version, properties.Title)
+
+		if (!config.Settings.Pod.Debug) {
+			time.Sleep(time.Duration(config.Settings.RealDebrid.Timeout) * time.Second)
+		}
 	}
 }
 
 func getTvDetails(tvId int) (overseerr_structs.TvDetails, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 	url := fmt.Sprintf("%s/api/v1/tv/%v", host, tvId)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -311,11 +317,15 @@ func getTvDetails(tvId int) (overseerr_structs.TvDetails, error) {
 }
 
 func getSeasonDetails(tvId int, seasonId int) (overseerr_structs.Season, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 
 	url := fmt.Sprintf("%s/api/v1/tv/%v/season/%v", host, tvId, seasonId)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

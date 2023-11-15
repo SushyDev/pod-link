@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"pod-link/modules/config"
 	"pod-link/modules/overseerr"
 )
 
@@ -16,6 +17,10 @@ func RefreshLibrary(id string) error {
 	}
 
 	url := fmt.Sprintf("%s/library/sections/%s/refresh?X-Plex-Token=%s", host, id, token)
+
+	if (config.GetConfig().Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -57,6 +62,10 @@ func GetShowLeaves(ratingKey string) (ShowLeaves, error) {
 	}
 
 	url := fmt.Sprintf("%s/library/metadata/%v/allLeaves?X-Plex-Token=%s", host, ratingKey, token)
+	
+	if (config.GetConfig().Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

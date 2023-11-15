@@ -14,6 +14,10 @@ func GetStreams(ImdbId string, Season int, Episode int) ([]torrentio.Stream, err
 	baseURL := torrentio.GetBaseURL("shows")
 	url := fmt.Sprintf("%s/stream/series/%s:%v:%v.json", baseURL, ImdbId, Season, Episode)
 
+	if (config.GetConfig().Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Failed to create request")

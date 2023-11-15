@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"pod-link/modules/config"
 	"pod-link/modules/torrentio"
 )
 
 func GetStreams(ImdbId string) ([]torrentio.Stream, error) {
 	baseURL := torrentio.GetBaseURL("movies")
 	url := fmt.Sprintf("%s/stream/movie/%s.json", baseURL, ImdbId)
+
+	if (config.GetConfig().Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

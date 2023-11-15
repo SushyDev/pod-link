@@ -3,6 +3,8 @@ package config
 type Pod struct {
 	Port           string `yaml:"port"`
 	Authorization  string `yaml:"authorization"`
+	Verbosity      int    `yaml:"verbosity"`
+	Debug          bool   `yaml:"debug"`
 	MissingContent struct {
 		RequestAge float64 `yaml:"request_age"`
 	} `yaml:"missing_content"`

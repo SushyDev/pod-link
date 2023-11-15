@@ -9,10 +9,14 @@ import (
 )
 
 func GetMovieDetails(movieId int) (overseerr_structs.MovieDetails, error) {
-	settings := config.GetSettings()
-	host := settings.Overseerr.Host
-	token := settings.Overseerr.Token
+	config := config.GetConfig()
+	host := config.Settings.Overseerr.Host
+	token := config.Settings.Overseerr.Token
 	url := fmt.Sprintf("%s/api/v1/movie/%v", host, movieId)
+
+	if (config.Settings.Pod.Verbosity >= 2) {
+		fmt.Printf("[DEBUG] %s\n", url)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

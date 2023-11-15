@@ -19,8 +19,8 @@ type RequestData struct {
 }
 
 func Listen() {
-	settings := config.GetSettings()
-	port := settings.Pod.Port
+	config := config.GetConfig()
+	port := config.Settings.Pod.Port
 	if port == "" {
 		port = "8080"
 	}
@@ -37,7 +37,7 @@ func Listen() {
 			return
 		}
 
-		if r.Header.Get("Authorization") != settings.Pod.Authorization {
+		if r.Header.Get("Authorization") != config.Settings.Pod.Authorization {
 			fmt.Println("Unauthorized")
 			return
 		}
