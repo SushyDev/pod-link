@@ -9,6 +9,7 @@ import (
 	overseerr_tv "pod-link/modules/overseerr/tv"
 	"pod-link/modules/plex"
 	"pod-link/modules/webhook"
+	"time"
 )
 
 func missingContent() {
@@ -40,6 +41,8 @@ func missingContent() {
 		case "tv":
 			overseerr_tv.Missing(requestDetails)
 		}
+
+		time.Sleep(15 * time.Second)
 
 		libraryIds := overseerr_settings.GetLibraryIdsByType(requestDetails.Media.MediaType)
 		for _, libraryId := range libraryIds {

@@ -12,6 +12,7 @@ import (
 	overseerr_structs "pod-link/modules/overseerr/structs"
 	overseerr_tv "pod-link/modules/overseerr/tv"
 	"pod-link/modules/plex"
+	"time"
 )
 
 type RequestData struct {
@@ -83,6 +84,8 @@ func handleNotification(notificationType string, body []byte) error {
 		case "tv":
 			overseerr_tv.Request(notification)
 		}
+
+		time.Sleep(15 * time.Second)
 
 		libraryIds := overseerr_settings.GetLibraryIdsByType(notification.Media.MediaType)
 		for _, libraryId := range libraryIds {
